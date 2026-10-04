@@ -1,0 +1,31 @@
+[package]
+name = "jockey-language"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY Language: Pest parser, AST, type checker, diagnostics"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "parsing", "compilers"]
+keywords = ["forensics", "dfir", "dsl", "parser", "ast", "pest"]
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+pest = { workspace = true, features = ["serde"] }
+pest_derive = { workspace = true }
+ulid = { workspace = true }
+chrono = { workspace = true }
+
+# Crate-local dependencies
+jockey-core = { path = "../jockey-core" }
+jockey-evidence = { path = "../jockey-evidence" }
+
+[build-dependencies]
+pest_generator = { version = "2.7", features = ["serde"] }
+
+[dev-dependencies]
+proptest = { workspace = true }

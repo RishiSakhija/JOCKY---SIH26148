@@ -1,0 +1,132 @@
+# Provenance Chain Diagram
+
+```mermaid
+flowchart TD
+    subgraph ROOT["Root: Collection"]
+        P0["ProvenanceRecord #0\naction='collected'\nactor='windows_evt'\ninput_hashes=[]\noutput_hashes=[H1]\nprev=null"]
+    end
+
+    subgraph TRANSFORM["Transformations"]
+        P1["ProvenanceRecord #1\naction='transformed'\nactor='correlator'\ninput_hashes=[H1]\noutput_hashes=[H2]\nprev=P0.id"]
+        P2["ProvenanceRecord #2\naction='correlated'\nactor='correlator'\ninput_hashes=[H2, H3]\noutput_hashes=[H4]\nprev=P1.id"]
+        P3["ProvenanceRecord #3\naction='transformed'\nactor='enricher'\ninput_hashes=[H4]\noutput_hashes=[H5]\nprev=P2.id"]
+    end
+
+    subgraph EXPORT["Export"]
+        P4["ProvenanceRecord #4\naction='exported'\nactor='exporter'\ninput_hashes=[H5]\noutput_hashes=[H6]\nprev=P3.id"]
+    end
+
+    P0 --> P1
+    P1 --> P2
+    P2 --> P3
+    P3 --> P4
+
+    subgraph VERIFICATION["Verification"]
+        V1["Verify P0: receipt sig + hash"]
+        V2["Verify P1: actor sig + input/output hashes"]
+        V3["Verify P2: actor sig + input/output hashes"]
+        V4["Verify P3: actor sig + input/output hashes"]
+        V5["Verify P4: actor sig + input/output hashes"]
+        V6["Chain Integrity: prev_provenance_id links\nH0→H1→H2→H3→H4→H5→H6"]
+    end
+
+    P0 --> V1
+    P1 --> V2
+    P2 --> V3
+    P3 --> V4
+    P4 --> V5
+    P0 -.-> V6
+    P1 -.-> V6
+    P2 -.-> V6
+    P3 -.-> V6
+    P4 -.-> V6
+
+    style P0 fill:#f59e0b,color:#fff
+    style P1 fill:#ef4444,color:#fff
+    style P2 fill:#ef4444,color:#fff
+    style P3 fill:#ef4444,color:#fff
+    style P4 fill:#06b6d4,color:#fff
+    style V1 fill:#10b981,color:#fff
+    style V2 fill:#10b981,color:#fff
+    style V3 fill:#10b981,color:#fff
+    style V4 fill:#10b981,color:#fff
+    style V5 fill:#10b981,color:#fff
+    style V6 fill:#10b981,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **hash-linked provenance chain** that tracks every transformation of evidence from collection through correlation to export.
+
+### Chain Structure
+
+Each `ProvenanceRecord` links to the previous via `prev_provenance_id`, creating an immutable chain:
+
+```
+Collection → Transform → Correlate → Transform → Export
+     │           │           │           │          │
+    P0 ───────▶ P1 ───────▶ P2 ───────▶ P3 ───────▶ P4
+```
+
+### Record Fields
+
+```json
+{
+  "id": "ULID",
+  "evidence_id": "ULID",              // Original evidence ULID
+  "receipt_id": "ULID",               // EvidenceReceipt ULID
+  "prev_provenance_id": "ULID|null",  // Chain link (null for root)
+  "action": "collected|transformed|correlated|exported",
+  "actor": "windows_evt|correlator|enricher|exporter",
+  "actor_version": "0.1.0",
+  "input_hashes": ["blake3_hash1", "blake3_hash2"],
+  "output_hashes": ["blake3_hash3"],
+  "parameters": { "rule": "timestamp_join", "window": 300 },
+  "timestamp": "2026-10-04T12:00:05Z",
+  "signature": "Ed25519(actor_key, canonical_json)"
+}
+```
+
+### Actions
+
+| Action | Actor | Description |
+|--------|-------|-------------|
+| `collected` | Collector | Initial evidence acquisition |
+| `transformed` | Correlator/Enricher | Format conversion, enrichment, normalization |
+| `correlated` | Correlator | Joining evidence via deterministic rules |
+| `exported` | Exporter | CASE/UCO, Cytoscape, Timesketch output |
+
+### Verification Process
+
+To verify an evidence object's full provenance:
+
+1. **Fetch Chain** — Query all `ProvenanceRecord` where `evidence_id = X` ordered by `timestamp`
+2. **Verify Each Link**:
+   - `Ed25519_verify(actor_pubkey, canonical_json(record), record.signature)`
+   - `record.prev_provenance_id` matches previous record's `id`
+   - `record.input_hashes` match previous record's `output_hashes`
+   - `record.output_hashes` match actual output evidence hashes
+3. **Verify Root** — Root record (`prev=null`) verified against `EvidenceReceipt`
+4. **Verify Evidence** — `blake3(evidence_bytes) == root_record.output_hashes[0]`
+
+### Tamper Detection
+
+| Attack | Detection |
+|--------|-----------|
+| Modify evidence file | Hash mismatch at root verification |
+| Modify receipt | Signature verification fails |
+| Insert fake provenance record | `prev_provenance_id` chain broken |
+| Reorder records | Timestamp ordering + hash chain broken |
+| Replay old record | `run_id` mismatch + timestamp skew |
+
+### Properties
+
+| Property | Mechanism |
+|----------|-----------|
+| **Immutability** | Append-only; each record signed by actor |
+| **Completeness** | Every transformation produces a record |
+| **Traceability** | Full chain from raw collection to final export |
+| **Non-repudiation** | Each actor signs with their identity key |
+| **Efficiency** | blake3 hashes; ULIDs for O(1) lookups |

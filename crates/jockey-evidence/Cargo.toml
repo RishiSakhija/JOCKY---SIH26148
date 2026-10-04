@@ -1,0 +1,29 @@
+[package]
+name = "jockey-evidence"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY Evidence: Common Evidence Model, Receipts, Provenance, Verification, Export"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "data-structures"]
+keywords = ["forensics", "dfir", "evidence", "provenance", "receipt", "verification", "case", "uco"]
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+ulid = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+blake3 = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+zeroize = { workspace = true }
+petgraph = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tempfile = { workspace = true }

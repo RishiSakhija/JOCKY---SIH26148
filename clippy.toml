@@ -1,0 +1,69 @@
+# clippy configuration for JOCKY
+# Run: cargo clippy --all-targets --all-features -- -D warnings
+
+# Allow these lints that are too noisy for our codebase
+allow = [
+    "clippy::module_name_repetitions",
+    "clippy::missing_errors_doc",
+    "clippy::missing_panics_doc",
+    "clippy::must_use_candidate",
+    "clippy::similar_names",
+    "clippy::too_many_arguments",
+    "clippy::type_complexity",
+    "clippy::enum_variant_names",
+    "clippy::struct_excessive_bools",
+    "clippy::large_enum_variant",
+    "clippy::multiple_crate_versions",
+]
+
+# Warn on these
+warn = [
+    "clippy::all",
+    "clippy::cargo",
+    "clippy::nursery",
+    "clippy::pedantic",
+    "clippy::unwrap_used",
+    "clippy::expect_used",
+    "clippy::panic",
+    "clippy::unimplemented",
+    "clippy::todo",
+    "clippy::unreachable",
+    "clippy::debug_assert_with_mut_call",
+    "clippy::doc_markdown",
+    "clippy::explicit_into_iter_loop",
+    "clippy::filter_map_next",
+    "clippy::flat_map_option",
+    "clippy::if_not_else",
+    "clippy::items_after_statements",
+    "clippy::let_underscore_future",
+    "clippy::map_flatten",
+    "clippy::match_same_arms",
+    "clippy::mut_mut",
+    "clippy::mutex_atomic",
+    "clippy::needless_borrow",
+    "clippy::needless_continue",
+    "clippy::option_if_let_else",
+    "clippy::or_fun_call",
+    "clippy::print_stdout",
+    "clippy::redundant_closure_for_method_calls",
+    "clippy::redundant_type_ascriptions",
+    "clippy::semicolon_if_nothing_returned",
+    "clippy::string_lit_as_bytes",
+    "clippy::string_to_string",
+    "clippy::suspicious_else_formatting",
+    "clippy::suspicious_xor_used_as_pow",
+    "clippy::try_err",
+    "clippy::unnecessary_self_imports",
+    "clippy::unused_self",
+    "clippy::use_self",
+    "clippy::verbose_file_reads",
+    "clippy::wildcard_enum_match_arm",
+]
+
+# Deny these (turn into errors)
+deny = [
+    "clippy::unwrap_in_result",
+    "clippy::todo",
+    "clippy::unimplemented",
+    "clippy::panic",
+]

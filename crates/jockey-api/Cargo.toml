@@ -1,0 +1,40 @@
+[package]
+name = "jockey-api"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY API: Axum HTTP server, WebSocket, OpenAPI"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "web-programming", "api"]
+keywords = ["forensics", "dfir", "api", "axum", "websocket", "rest"]
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+ulid = { workspace = true }
+chrono = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+http = { workspace = true }
+mime = { workspace = true }
+figment = { workspace = true }
+config = { workspace = true }
+clap = { workspace = true }
+
+# Crate-local dependencies
+jockey-core = { path = "../jockey-core" }
+jockey-runtime = { path = "../jockey-runtime" }
+jockey-evidence = { path = "../jockey-evidence" }
+jockey-correlation = { path = "../jockey-correlation" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tempfile = { workspace = true }
+reqwest = { version = "0.12", features = ["json", "ws", "rustls-tls"] }

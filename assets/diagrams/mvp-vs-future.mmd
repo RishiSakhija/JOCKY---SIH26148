@@ -1,0 +1,144 @@
+# MVP vs Future Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph MVP["MVP (SIH Demo)"]
+        direction TB
+        MVP_LANG["Language\n✅ Parser (pest)\n✅ AST + Type Check\n✅ IR Compiler"]
+        MVP_CONTRACT["Execution Contract\n✅ Contract Builder\n✅ Policy Engine\n✅ Capability Validation"]
+        MVP_RUNTIME["Runtime\n✅ Sequential Dispatch\n✅ Parallel Dispatch\n✅ Timeout/Retry\n✅ Evidence Root Isolation"]
+        MVP_EVIDENCE["Evidence Model\n✅ 7 Evidence Types\n✅ ULIDs + blake3\n✅ Ed25519 Receipts\n✅ Provenance Chain"]
+        MVP_WIN["Windows Collectors\n✅ proc_windows\n✅ file_windows\n✅ registry_windows\n✅ logs_windows\n✅ net_windows"]
+        MVP_LIN["Linux Collectors\n✅ proc_linux\n✅ file_linux\n✅ config_linux\n✅ logs_linux\n✅ net_linux"]
+        MVP_CORR["Correlation\n✅ 9 Deterministic Rules\n✅ petgraph\n✅ Graph Queries\n✅ Hypothesis Overlay"]
+        MVP_API["API\n✅ Axum REST\n✅ WebSocket\n✅ OpenAPI"]
+        MVP_UI["Frontend\n✅ 8 Pages\n✅ Cytoscape Graph\n✅ Chart.js Timeline\n✅ Evidence Browser\n✅ Findings Kanban\n✅ Verification Report\n✅ Report View"]
+        MVP_EXPORT["Export\n✅ CASE/UCO Core\n✅ Cytoscape JSON\n✅ Timesketch CSV\n✅ Markdown Report"]
+        MVP_CLI["CLI\n✅ jockey run\n✅ jockey compile\n✅ jockey graph\n✅ jockey verify\n✅ jockey export"]
+    end
+
+    subgraph POST_MVP["Post-MVP (Phase 2+)"]
+        direction TB
+        PM_EBPF["eBPF Collectors\n🔄 Aya-based\n🔄 proc_ebpf, file_ebpf, net_ebpf\n🔄 CO-RE + BTF\n🔄 Kernel 5.10+"]
+        PM_KERNEL["Kernel Drivers\n🔄 Windows ETW Kernel\n🔄 Minifilter for file\n🔄 Signed drivers"]
+        PM_REMOTE["Remote Agent Protocol\n🔄 gRPC/mTLS\n🔄 Capability Negotiation\n🔄 Agent Registration"]
+        PM_MT["Multi-tenancy\n🔄 Orgs, RBAC\n🔄 Data Isolation\n🔄 Audit Logging"]
+        PM_AI["AI Assist (Local)\n🔄 Hypothesis Suggestion\n🔄 Timeline Summarization\n🔄 Local LLM Only"]
+        PM_COLLAB["Collaborative Investigation\n🔄 CRDT-based Editing\n🔄 Multi-Analyst\n🔄 Shift Handoff"]
+        PM_CLOUD["Cloud Collection\n🔄 AWS/Azure/GCP APIs\n🔄 Snapshot Collection\n🔄 CloudTrail/Logs"]
+        PM_CONTAINER["Container Forensics\n🔄 Docker/containerd\n🔄 Kubernetes API\n🔄 Pod/Node Artifacts"]
+        PM_MOBILE["Mobile Forensics\n🔄 iOS Backup Parsing\n🔄 Android ADB\n🔄 Checkra1n/Checkm8"]
+        PM_FORMAL["Formal Verification\n🔄 Prusti/Kani\n🔄 IR Safety Proofs\n🔄 Memory Safety"]
+    end
+
+    subgraph RESEARCH["Research (Phase 3+)"]
+        direction TB
+        R_WASM["WASM Collector Plugins\n🟦 Sandboxed Extensions\n🟦 Portable Collectors\n🟦 Dynamic Loading"]
+        R_DIST["Distributed Execution\n🟦 Multi-Target Coordination\n🟦 Result Aggregation\n🟦 Cross-Region"]
+        R_OPT["Query Optimization\n🟦 IR Rewrite Rules\n🟦 Collector Pushdown\n🟦 Cost-Based Planning"]
+        R_DIFF["Differential Investigation\n🟦 Run Comparison\n🟦 Delta Highlighting\n🟦 Regression Detection"]
+        R_NOTARY["Evidence Notarization\n🟦 Blockchain Timestamping\n🟦 Trusted Timestamping\n🟦 Legal Hold Integration"]
+        R_LEGAL["Legal Hold Integration\n🟦 Preservation Workflows\n🟦 Chain of Custody\n🟦 Court Export Packages"]
+        R_INTEL["Threat Intel Fusion\n🟦 Real-time IOC Enrichment\n🟦 ATT&CK Mapping\n🟦 Alert Triage"]
+    end
+
+    MVP_LANG -.-> PM_EBPF
+    MVP_CONTRACT -.-> PM_REMOTE
+    MVP_RUNTIME -.-> PM_REMOTE
+    MVP_WIN -.-> PM_KERNEL
+    MVP_LIN -.-> PM_EBPF
+    MVP_CORR -.-> PM_AI
+    MVP_API -.-> PM_MT
+    MVP_UI -.-> PM_COLLAB
+    MVP_EXPORT -.-> R_NOTARY
+
+    style MVP_LANG fill:#10b981,color:#fff
+    style MVP_CONTRACT fill:#10b981,color:#fff
+    style MVP_RUNTIME fill:#10b981,color:#fff
+    style MVP_EVIDENCE fill:#10b981,color:#fff
+    style MVP_WIN fill:#10b981,color:#fff
+    style MVP_LIN fill:#10b981,color:#fff
+    style MVP_CORR fill:#10b981,color:#fff
+    style MVP_API fill:#10b981,color:#fff
+    style MVP_UI fill:#10b981,color:#fff
+    style MVP_EXPORT fill:#10b981,color:#fff
+    style MVP_CLI fill:#10b981,color:#fff
+
+    style PM_EBPF fill:#f59e0b,color:#fff
+    style PM_KERNEL fill:#f59e0b,color:#fff
+    style PM_REMOTE fill:#f59e0b,color:#fff
+    style PM_MT fill:#f59e0b,color:#fff
+    style PM_AI fill:#f59e0b,color:#fff
+    style PM_COLLAB fill:#f59e0b,color:#fff
+    style PM_CLOUD fill:#f59e0b,color:#fff
+    style PM_CONTAINER fill:#f59e0b,color:#fff
+    style PM_MOBILE fill:#f59e0b,color:#fff
+    style PM_FORMAL fill:#f59e0b,color:#fff
+
+    style R_WASM fill:#3b82f6,color:#fff
+    style R_DIST fill:#3b82f6,color:#fff
+    style R_OPT fill:#3b82f6,color:#fff
+    style R_DIFF fill:#3b82f6,color:#fff
+    style R_NOTARY fill:#3b82f6,color:#fff
+    style R_LEGAL fill:#3b82f6,color:#fff
+    style R_INTEL fill:#3b82f6,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **MVP scope** (what's specified for SIH demo) vs **Post-MVP** and **Research** directions.
+
+### MVP Scope (Phases 0-8, SIH Demo Ready)
+
+| Component | Status | Implementation |
+|-----------|--------|----------------|
+| **Language** | ✅ Specified | Pest grammar, AST, type checker, IR compiler |
+| **Execution Contract** | ✅ Specified | Contract builder, policy engine, capability validation |
+| **Runtime** | ✅ Specified | Sequential/parallel dispatch, timeout/retry, isolation |
+| **Evidence Model** | ✅ Specified | 7 types, ULIDs, blake3, Ed25519, provenance chain |
+| **Windows Collectors** | ✅ Specified | 5 collectors (proc, file, reg, logs, net) |
+| **Linux Collectors** | ✅ Specified | 5 collectors (proc, file, config, logs, net) |
+| **Correlation** | ✅ Specified | 9 rules, petgraph, queries, hypothesis overlay |
+| **API** | ✅ Specified | Axum REST + WebSocket, OpenAPI |
+| **Frontend** | ✅ Specified | 8 pages, Cytoscape, Chart.js, Kanban |
+| **Export** | ✅ Specified | CASE/UCO, Cytoscape, Timesketch, Markdown |
+| **CLI** | ✅ Specified | run, compile, graph, verify, export |
+
+### Post-MVP (Phases 9-15, After SIH)
+
+| Feature | Description | Effort | Dependencies |
+|---------|-------------|--------|--------------|
+| **eBPF Collectors** | Aya-based syscall/socket/file tracing | High | Kernel 5.10+, BTF/CO-RE |
+| **Kernel Drivers** | Windows ETW kernel, minifilter | Very High | Driver signing, WHQL |
+| **Remote Agents** | gRPC/mTLS, capability negotiation | High | Agent binary, enrollment |
+| **Multi-tenancy** | Orgs, RBAC, data isolation | Medium | AuthZ, PostgreSQL |
+| **AI Assist** | Local LLM for hypothesis/timeline | Medium | llama.cpp, GGUF models |
+| **Collaboration** | CRDT-based multi-analyst | High | Yjs/Automerge, WebRTC |
+| **Cloud Collection** | AWS/Azure/GCP snapshot APIs | Medium | Cloud SDKs, IAM |
+| **Container Forensics** | Docker/containerd/K8s artifacts | Medium | CRI, K8s API |
+| **Mobile Forensics** | iOS/Android backup parsing | High | libimobiledevice, ADB |
+| **Formal Verification** | Prusti/Kani proofs for IR | Very High | Rust verification tools |
+
+### Research Directions (Exploratory)
+
+| Feature | Description | Maturity |
+|---------|-------------|----------|
+| **WASM Plugins** | Sandboxed, portable collector extensions | Experimental |
+| **Distributed Execution** | Multi-target coordination, aggregation | Research |
+| **Query Optimization** | IR rewrite rules, collector pushdown | Research |
+| **Differential Investigation** | Compare runs, highlight deltas | Research |
+| **Evidence Notarization** | Blockchain/trusted timestamping | Research |
+| **Legal Hold** | Automated preservation workflows | Research |
+| **Threat Intel Fusion** | Real-time IOC enrichment | Research |
+
+### Decision Criteria for Post-MVP
+
+| Criterion | Threshold |
+|-----------|-----------|
+| **User Demand** | >3 SIH judges/mentors request |
+| **Technical Feasibility** | Prototype in <2 weeks |
+| **Security Impact** | No new attack surface |
+| **Maintenance Burden** | <5% of codebase |
+| **Alignment** | Supports Evidence-Contract USP |

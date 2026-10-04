@@ -1,0 +1,120 @@
+# System Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph LANG["JOCKY Language Layer"]
+        DSL["JOCKY Script (.jky)"]
+        PEST["pest Parser"]
+        AST["Typed AST"]
+        IR["Forensic IR"]
+    end
+
+    subgraph CORE["JOCKY Core Layer"]
+        CONTRACT["Execution Contract Builder"]
+        POLICY["Policy Engine"]
+        RUNTIME["Runtime Engine"]
+    end
+
+    subgraph COLLECTORS["Collector Layer"]
+        REG["Collector Registry"]
+        WIN["Windows Collectors"]
+        LIN["Linux Collectors"]
+        EBPF["eBPF Collectors (Future)"]
+    end
+
+    subgraph EVIDENCE["Evidence Layer"]
+        MODEL["Common Evidence Model"]
+        RECEIPT["Evidence Receipt (Ed25519)"]
+        PROV["Provenance Chain"]
+    end
+
+    subgraph CORRELATION["Correlation Layer"]
+        RULES["Deterministic Rules"]
+        GRAPH["Investigation Graph (petgraph)"]
+    end
+
+    subgraph VERIFICATION["Verification Layer"]
+        VERIFY["Verification Engine"]
+    end
+
+    subgraph EXPORT["Export Layer"]
+        CASE["CASE/UCO JSON-LD"]
+        CYTO["Cytoscape.js JSON"]
+        TS["Timesketch CSV"]
+        MD["Markdown Report"]
+    end
+
+    subgraph API["API Layer"]
+        AXUM["Axum HTTP + WebSocket"]
+        UI["Frontend Dashboard"]
+    end
+
+    DSL --> PEST
+    PEST --> AST
+    AST --> IR
+    IR --> CONTRACT
+    CONTRACT --> POLICY
+    POLICY --> RUNTIME
+    RUNTIME --> REG
+    REG --> WIN
+    REG --> LIN
+    REG -.-> EBPF
+    WIN --> MODEL
+    LIN --> MODEL
+    MODEL --> RECEIPT
+    RECEIPT --> PROV
+    PROV --> RULES
+    RULES --> GRAPH
+    GRAPH --> VERIFY
+    VERIFY --> CASE
+    VERIFY --> CYTO
+    VERIFY --> TS
+    VERIFY --> MD
+    GRAPH --> AXUM
+    AXUM --> UI
+
+    style DSL fill:#3b82f6,color:#fff
+    style PEST fill:#3b82f6,color:#fff
+    style AST fill:#3b82f6,color:#fff
+    style IR fill:#3b82f6,color:#fff
+    style CONTRACT fill:#8b5cf6,color:#fff
+    style POLICY fill:#8b5cf6,color:#fff
+    style RUNTIME fill:#8b5cf6,color:#fff
+    style WIN fill:#10b981,color:#fff
+    style LIN fill:#10b981,color:#fff
+    style EBPF fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style MODEL fill:#f59e0b,color:#fff
+    style RECEIPT fill:#f59e0b,color:#fff
+    style PROV fill:#f59e0b,color:#fff
+    style RULES fill:#ef4444,color:#fff
+    style GRAPH fill:#ef4444,color:#fff
+    style VERIFY fill:#ef4444,color:#fff
+    style CASE fill:#06b6d4,color:#fff
+    style CYTO fill:#06b6d4,color:#fff
+    style TS fill:#06b6d4,color:#fff
+    style MD fill:#06b6d4,color:#fff
+    style AXUM fill:#06b6d4,color:#fff
+    style UI fill:#06b6d4,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **complete JOCKY system architecture** organized into 7 logical layers:
+
+1. **Language Layer** — DSL parsing, AST, type checking, IR generation
+2. **Core Layer** — Execution Contract building, policy validation, runtime execution
+3. **Collector Layer** — Registry with Windows, Linux, and future eBPF collectors
+4. **Evidence Layer** — Common Evidence Model, cryptographic receipts, provenance chains
+5. **Correlation Layer** — Deterministic rules engine, petgraph-based investigation graph
+6. **Verification Layer** — Tamper detection via receipt + provenance validation
+7. **Export Layer** — Multiple output formats (CASE/UCO, Cytoscape, Timesketch, Markdown)
+8. **API Layer** — Axum HTTP/WebSocket server serving the frontend dashboard
+
+**Key Architectural Decisions:**
+- Clear separation between intent (Language) and action (Runtime)
+- Policy engine as security boundary (Execution Contract)
+- Every evidence piece gets immediate receipt + provenance
+- Deterministic correlation (no ML) with explicit evidence citations
+- Export formats decoupled from internal representation

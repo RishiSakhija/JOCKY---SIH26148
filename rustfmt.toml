@@ -1,0 +1,55 @@
+# rustfmt configuration for JOCKY
+# Run: cargo fmt --all
+
+# General
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+hard_tabs = false
+newline_style = "Unix"
+
+# Formatting
+fn_args_layout = "Tall"
+fn_single_line = false
+struct_lit_single_line = false
+enum_discrim_align_threshold = 0
+use_field_init_shorthand = true
+use_small_heuristics = "Max"
+item_brace_style = "SameLineWhere"
+match_block_trailing_comma = true
+match_expr_trailing_comma = true
+expr_trailing_comma = "Always"
+array_element_trailing_comma = true
+
+# Imports
+imports_granularity = "Item"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+imports_layout = "Vertical"
+
+# Comments
+normalize_comments = true
+comment_width = 80
+wrap_comments = true
+
+# Attributes
+attr_fn_like = "Preserve"
+format_macro_matchers = true
+format_macro_bodies = true
+
+# Control flow
+control_brace_style = "Always"
+conditional_brace_style = "Always"
+merge_derives = true
+
+# Spacing
+space_before_brace = true
+space_around_operators = true
+spaces_around_ranges = true
+spaces_within_angle_brackets = false
+spaces_within_parens = false
+spaces_within_brackets = false
+spaces_within_braces = true
+
+# Stability
+unstable_features = false

@@ -1,0 +1,171 @@
+# SIH Demo Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant Judge as SIH Judge
+    participant CLI as jockey CLI
+    participant Runtime as JOCKY Runtime
+    participant Collectors as Collectors
+    participant Evidence as Evidence Store
+    participant Correlation as Correlation Engine
+    participant Graph as Investigation Graph
+    participant Verify as Verification Engine
+    participant Export as Export Engine
+    participant Dashboard as Frontend Dashboard
+
+    Note over Judge, Dashboard: === SIH DEMO SEQUENCE (8 Steps) ===
+
+    Judge->>CLI: 1. LOAD SAMPLE\n`jockey load sample_case/`
+    CLI->>Runtime: Load Plaso CSV
+    Runtime->>Evidence: Create synthetic evidence nodes
+    Runtime-->>CLI: Evidence loaded (47 events)
+    CLI-->>Judge: ✅ Sample loaded: process tree, DNS, registry, file write
+
+    Judge->>CLI: 2. SHOW GRAPH\n`jockey graph show`
+    CLI->>Graph: Query investigation graph
+    Graph-->>CLI: Causal chain (DOT/Cytoscape)
+    CLI-->>Judge: 📊 Graph: svchost → powershell → network → file → registry
+
+    Judge->>CLI: 3. RUN DSL\n`jockey run investigate.jky`
+    CLI->>Runtime: Parse → AST → IR → Contract → Execute
+    Runtime->>Collectors: Dispatch collection steps
+    Collectors-->>Runtime: Evidence + Receipts
+    Runtime->>Evidence: Persist
+    Runtime->>Correlation: Apply rules
+    Correlation->>Graph: Build graph
+    Graph->>Graph: Bind hypotheses
+    Runtime-->>CLI: Investigation complete
+    CLI-->>Judge: ✅ Investigation executed: 3 findings, 12 correlations
+
+    Judge->>CLI: 4. COMPILE\n`jockey compile investigate.jky`
+    CLI->>CLI: Lower IR → Backend Targets
+    CLI-->>Judge: 📄 Generated:\n  • hunt.vql (Velociraptor)\n  • kape_targets.json (KAPE)\n  • evidence.case.json (CASE/UCO)
+
+    Judge->>CLI: 5. EXPORT NARRATIVE\n`jockey narrative`
+    CLI->>Export: Generate Markdown report
+    Export-->>CLI: evidence_report.md
+    CLI-->>Judge: 📋 Report: Causal story with evidence citations
+
+    Judge->>CLI: 6. VERIFY INTEGRITY\n`jockey verify`
+    CLI->>Verify: Check receipts + provenance
+    Verify-->>CLI: VerificationReport: PASS
+    CLI-->>Judge: 🔐 Verification: All 47 receipts valid, hash chain intact
+
+    Judge->>CLI: 7. TAMPER DEMO\n(Modify evidence file)
+    CLI->>CLI: `echo "tampered" >> evidence/ULID.jsonl`
+    Judge->>CLI: `jockey verify`
+    CLI->>Verify: Re-verify
+    Verify-->>CLI: VerificationReport: FAIL\n  Evidence ULID: hash mismatch\n  Provenance chain broken at record #3
+    CLI-->>Judge: ❌ Verification FAILED - Tamper detected!
+
+    Judge->>CLI: (Restore original evidence)
+    CLI->>CLI: `git checkout evidence/ULID.jsonl`
+    Judge->>CLI: `jockey verify`
+    CLI->>Verify: Re-verify
+    Verify-->>CLI: VerificationReport: PASS
+    CLI-->>Judge: ✅ Verification PASSED - Integrity restored
+
+    Judge->>CLI: 8. CLOSE
+    CLI-->>Judge: "One script. Three backends.\nComplete evidence chain. Zero post-processing."
+```
+
+---
+
+## Demo Script Details
+
+### Prerequisites
+```bash
+# Build release binary
+cargo build --release --workspace
+
+# Prepare sample case (synthetic, generated)
+cargo run --bin generate_test_data -- --case apt29 --output sample_case/
+
+# Start API server (for dashboard)
+./target/release/jockey serve --addr 0.0.0.0:8080 --evidence-root ./evidence &
+```
+
+### Demo Files
+
+| File | Purpose |
+|------|---------|
+| `sample_case/` | Pre-parsed Plaso CSV (synthetic) |
+| `investigate.jky` | Demo JOCKY script (hypothesis-driven) |
+| `hunt.vql` | Compiled Velociraptor VQL |
+| `kape_targets.json` | Compiled KAPE targets |
+| `evidence.case.json` | CASE/UCO export with provenance |
+
+### investigate.jky (Demo Script)
+
+```jocky
+investigation "apt29-lateral-movement-demo" {
+    hypothesis "APT29 used WMI for lateral movement" {
+        mitre: ["T1047", "T1547.001"]
+    }
+
+    collect process as wmi_providers where command_line contains "wmic"
+    collect process as spawns where parent_name == "wmiprvse.exe"
+    collect registry as run_keys where path matches "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run*"
+    collect network as outbound where destination_port in [443, 80, 135, 445]
+
+    correlate wmi_providers -> spawns by "pid_link" as wmi_chain
+    correlate wmi_chain -> run_keys by "timestamp_join" window 300s as persistence
+    correlate persistence -> outbound by "process_netlink" as c2_beacon
+
+    timeline "lateral_movement" from wmi_chain, persistence, c2_beacon
+    bind hypothesis "APT29 used WMI for lateral movement" to wmi_chain, persistence
+
+    export case "apt29-case" format case_uco
+    export graph "apt29-graph" format cytoscape
+    export report "apt29-report" format markdown
+}
+```
+
+### Expected Outputs
+
+| Step | Command | Expected Output |
+|------|---------|-----------------|
+| 1 | `jockey load sample_case/` | "Loaded 47 events: 12 processes, 8 network, 15 registry, 12 file" |
+| 2 | `jockey graph show` | Cytoscape JSON / DOT showing causal chain |
+| 3 | `jockey run investigate.jky` | "Investigation 01ARZ... completed: 3 findings, 12 correlations" |
+| 4 | `jockey compile investigate.jky` | 3 files generated (VQL, KAPE, CASE) |
+| 5 | `jockey narrative` | `evidence_report.md` with citations |
+| 6 | `jockey verify` | "PASS: 47/47 receipts valid, provenance chain intact" |
+| 7 | Tamper + `jockey verify` | "FAIL: Evidence ULID hash mismatch at provenance #3" |
+| 8 | Restore + `jockey verify` | "PASS: Integrity restored" |
+
+### Dashboard Demo (Parallel)
+
+1. Open `http://localhost:8080` in browser
+2. Show investigation list → click demo investigation
+3. **Graph tab**: Interactive Cytoscape graph, filter by hypothesis
+4. **Timeline tab**: Chart.js timeline, zoom to attack window
+5. **Evidence tab**: Table with receipt/provenance drill-down
+6. **Findings tab**: Kanban board with MITRE tags
+7. **Verify tab**: Run verification, show PASS/FAIL
+8. **Export tab**: Download CASE/UCO, Cytoscape, Markdown
+
+### Key Talking Points
+
+| Point | Message |
+|-------|---------|
+| **Unified Language** | One script → VQL + KAPE + CASE/UCO |
+| **Evidence Contracts** | Every artifact signed at collection |
+| **Provenance** | Hash-linked chain from raw to report |
+| **Deterministic Correlation** | Rules with explicit evidence citations |
+| **Tamper Detection** | Cryptographic verification catches any modification |
+| **Reproducibility** | Same script + same target = bit-for-bit identical evidence |
+
+### Timing (Total: ~8 minutes)
+
+| Step | Time |
+|------|------|
+| Load Sample | 30s |
+| Show Graph | 30s |
+| Run DSL | 60s |
+| Compile | 30s |
+| Export Narrative | 30s |
+| Verify Integrity | 30s |
+| Tamper Demo | 60s |
+| Close + Q&A | 60s |
+| **Total** | **~7 min** |

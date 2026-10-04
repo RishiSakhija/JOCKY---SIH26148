@@ -1,0 +1,176 @@
+# Deployment Topology Diagram
+
+```mermaid
+flowchart TD
+    subgraph ANALYST["Analyst Workstation"]
+        CLI["jockey CLI"]
+        BROWSER["Browser\n(frontend dashboard)"]
+    end
+
+    subgraph SERVER["JOCKY Server (Single Binary)"]
+        API["Axum HTTP Server\n:8080"]
+        WS["WebSocket Server\n:8080/ws"]
+        RUNTIME["Runtime Engine"]
+        REGISTRY["Collector Registry"]
+        STORAGE["SQLite DB\n(evidence, receipts, provenance,\ncorrelations, findings)"]
+        FILES["Evidence Filesystem\n(evidence_root/)"]
+    end
+
+    subgraph TARGETS["Investigation Targets"]
+        WIN_LIVE["Windows Live\n(proc_windows, file_windows,\nregistry_windows, logs_windows,\nnet_windows)"]
+        LIN_LIVE["Linux Live\n(proc_linux, file_linux,\nconfig_linux, logs_linux,\nnet_linux)"]
+        WIN_DEAD["Windows Disk Image\n(file_windows: MFT, USN, VSS)"]
+        LIN_DEAD["Linux Disk Image\n(file_linux: ext4/xfs)"]
+        MEM_DUMP["Memory Dump\n(Future: Volatility integration)"]
+        NET_PCAP["Network Capture\n(Future: net_windows/net_linux capture)"]
+    end
+
+    subgraph EXTERNAL["External Integrations"]
+        VEL["Velociraptor\n(VQL compilation target)"]
+        KAPE["KAPE\n(targets compilation target)"]
+        VOL["Volatility 3\n(plugin compilation target)"]
+        OSQ["osquery\n(SQL compilation target)"]
+        CASE["CASE/UCO\n(export format)"]
+        TS["Timesketch\n(export format)"]
+    end
+
+    CLI -->|HTTPS/WS| API
+    BROWSER -->|HTTPS/WS| API
+    API --> RUNTIME
+    WS --> RUNTIME
+    RUNTIME --> REGISTRY
+    RUNTIME --> STORAGE
+    RUNTIME --> FILES
+    REGISTRY -.->|Dynamic Load| WIN_LIVE
+    REGISTRY -.->|Dynamic Load| LIN_LIVE
+    RUNTIME -->|SSH/WinRM| WIN_LIVE
+    RUNTIME -->|SSH| LIN_LIVE
+    RUNTIME -->|Mount| WIN_DEAD
+    RUNTIME -->|Mount| LIN_DEAD
+    RUNTIME -.->|Future| MEM_DUMP
+    RUNTIME -.->|Future| NET_PCAP
+    RUNTIME -->|Compile| VEL
+    RUNTIME -->|Compile| KAPE
+    RUNTIME -->|Compile| VOL
+    RUNTIME -->|Compile| OSQ
+    EXPORT -.->|Export| CASE
+    EXPORT -.->|Export| TS
+
+    style CLI fill:#3b82f6,color:#fff
+    style BROWSER fill:#3b82f6,color:#fff
+    style API fill:#8b5cf6,color:#fff
+    style WS fill:#8b5cf6,color:#fff
+    style RUNTIME fill:#8b5cf6,color:#fff
+    style REGISTRY fill:#8b5cf6,color:#fff
+    style STORAGE fill:#06b6d4,color:#fff
+    style FILES fill:#06b6d4,color:#fff
+    style WIN_LIVE fill:#10b981,color:#fff
+    style LIN_LIVE fill:#10b981,color:#fff
+    style WIN_DEAD fill:#10b981,color:#fff
+    style LIN_DEAD fill:#10b981,color:#fff
+    style MEM_DUMP fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style NET_PCAP fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style VEL fill:#f59e0b,color:#fff
+    style KAPE fill:#f59e0b,color:#fff
+    style VOL fill:#f59e0b,color:#fff
+    style OSQ fill:#f59e0b,color:#fff
+    style CASE fill:#06b6d4,color:#fff
+    style TS fill:#06b6d4,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **deployment topology** for JOCKY.
+
+### Deployment Models
+
+| Model | Description | Use Case |
+|-------|-------------|----------|
+| **Single Binary (MVP)** | One `jockey` binary runs API + Runtime + Collectors | Local investigation, SIH demo |
+| **Server + Agents (Future)** | Central server manages remote collectors via SSH/WinRM | Fleet investigation |
+| **Air-Gapped (Future)** | Offline binary + pre-compiled collector bundles | Classified environments |
+
+### MVP: Single Binary Deployment
+
+```bash
+# Build
+cargo build --release --workspace
+
+# Run server
+./target/release/jockey serve --addr 0.0.0.0:8080 --evidence-root ./evidence
+
+# Run investigation (CLI)
+./target/release/jockey run investigate.jky --target live --host WORKSTATION-01
+
+# Or via API
+curl -X POST http://localhost:8080/api/v1/investigations \
+  -H "Content-Type: application/json" \
+  -d '{"script": "...", "target": {"type": "live", "identifier": "HOST-01", "os": "windows"}}'
+```
+
+### Components
+
+| Component | Technology | Port | Data |
+|-----------|------------|------|------|
+| **API Server** | Axum | 8080 (HTTP) | REST + WebSocket |
+| **Runtime** | Embedded in binary | — | In-memory execution |
+| **Collector Registry** | Embedded | — | Trait objects |
+| **SQLite DB** | rusqlite | — | `jockey.db` (in evidence_root) |
+| **Evidence Files** | Filesystem | — | `evidence_root/run_id/` |
+| **Frontend** | Static files | Served by Axum | `frontend/` |
+
+### Target Access Methods
+
+| Target Type | Access Method | Collectors |
+|-------------|---------------|------------|
+| Windows Live | WinRM / SSH / Local | All 5 Windows collectors |
+| Linux Live | SSH / Local | All 5 Linux collectors |
+| Windows Disk Image | Mount (read-only) | `file_windows` (MFT, USN, VSS) |
+| Linux Disk Image | Mount (read-only) | `file_linux` |
+| Memory Dump | File read | Future: Volatility integration |
+| Network PCAP | File read | Future: Zeek/tshark integration |
+
+### Security Boundaries
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    JOCKY PROCESS                         │
+├─────────────────────────────────────────────────────────┤
+│  API (untrusted input) → Validation → Runtime (trusted) │
+│                                    │                     │
+│                                    ▼                     │
+│                          Collector Execution            │
+│                          (capability-scoped)            │
+│                                    │                     │
+│                                    ▼                     │
+│                          Evidence Root (chrooted)       │
+└─────────────────────────────────────────────────────────┘
+```
+
+- **API**: Validates all input (script, target, params)
+- **Runtime**: Executes validated contracts only
+- **Collectors**: Run with minimal privileges; no arbitrary code
+- **Evidence Root**: Isolated per-run directory; no path traversal
+- **Database**: Local SQLite; no network exposure
+
+### Future: Distributed Deployment
+
+```
+┌─────────────┐     gRPC/mTLS      ┌──────────────────┐
+│ JOCKY       │ ◀─────────────────▶ │ Collector Agent  │
+│ Controller  │   Capability Negotiation │ (Windows/Linux) │
+└─────────────┘                     └──────────────────┘
+       │                                      │
+       ▼                                      ▼
+┌─────────────┐                     ┌──────────────────┐
+│ SQLite/     │                     │ Local Evidence   │
+│ PostgreSQL  │                     │ Cache            │
+└─────────────┘                     └──────────────────┘
+```
+
+- Controller manages multiple agents
+- Agents register capabilities; controller validates contracts
+- mTLS for agent-controller communication
+- Evidence streamed to controller or stored locally

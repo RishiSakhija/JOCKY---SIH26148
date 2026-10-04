@@ -1,0 +1,143 @@
+# End-to-End Investigation Workflow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Analyst
+    participant JOCKY as JOCKY CLI/API
+    participant Parser as pest Parser
+    participant TypeCheck as Type Checker
+    participant Compiler as IR Compiler
+    participant Policy as Policy Engine
+    participant Runtime as Runtime Engine
+    participant Collectors as Collectors (Win/Lin)
+    participant Evidence as Evidence Store
+    participant Correlation as Correlation Engine
+    participant Graph as Investigation Graph
+    participant Verify as Verification Engine
+    participant Export as Export Engine
+    participant Dashboard as Frontend Dashboard
+
+    Analyst->>JOCKY: Submit JOCKY Script
+    JOCKY->>Parser: Parse Script
+    Parser-->>JOKY: AST
+    JOKY->>TypeCheck: Type Check + Capability Inference
+    TypeCheck-->>JOKY: Typed AST
+    JOKY->>Compiler: Lower to IR
+    Compiler-->>JOKY: Forensic IR Module
+    JOKY->>Policy: Build Execution Contract
+    Policy->>Policy: Validate Capabilities\nCheck Allowlist\nEnforce Bounds
+    alt Validation Failed
+        Policy-->>Analyst: PolicyError
+    else Validation Passed
+        Policy->>Runtime: Validated Execution Contract
+        Runtime->>Runtime: Plan Execution (Topo Sort + Parallelism)
+        loop For Each Step
+            Runtime->>Collectors: execute(action, params, context)
+            Collectors->>Collectors: Collect Evidence\nHash (blake3)\nSign Receipt (Ed25519)
+            Collectors-->>Runtime: Evidence + Receipt
+            Runtime->>Evidence: Persist Evidence + Receipt\nCreate Provenance Record
+        end
+        Runtime->>Correlation: All Evidence for Run
+        Correlation->>Correlation: Apply Deterministic Rules\nGenerate Correlation Edges
+        Correlation->>Graph: Build Investigation Graph\n(Nodes=Evidence, Edges=Correlations)
+        Graph->>Graph: Apply Hypothesis Bindings\nCompute Hypothesis Confidence
+        Runtime->>Verify: Verify Receipts + Provenance Chain
+        Verify->>Verify: Check Signatures\nValidate Hash Chain\nDetect Tamper
+        alt Verification Failed
+            Verify-->>Analyst: VerificationReport (FAIL + details)
+        else Verification Passed
+            Verify->>Export: Verified Graph
+            Export->>Export: Generate Outputs\nCASE/UCO, Cytoscape, Timesketch, Markdown
+            Export-->>Analyst: Investigation Artifacts
+            Graph-->>Dashboard: Real-time Updates (WebSocket)
+            Dashboard-->>Analyst: Interactive Graph, Timeline, Evidence, Findings
+        end
+    end
+```
+
+---
+
+## Explanation
+
+This sequence diagram shows the **complete end-to-end investigation workflow** from analyst script submission to verified results.
+
+### Workflow Stages
+
+| Stage | Component | Input | Output | Duration |
+|-------|-----------|-------|--------|----------|
+| **1. Parse** | pest Parser | `.jky` script | AST | ~ms |
+| **2. Type Check** | Type Checker | AST | Typed AST + Capabilities | ~ms |
+| **3. Compile** | IR Compiler | Typed AST | Forensic IR | ~ms |
+| **4. Contract** | Policy Engine | IR + Target | Execution Contract | ~ms |
+| **5. Execute** | Runtime + Collectors | Contract | Evidence + Receipts | seconds-minutes |
+| **6. Correlate** | Correlation Engine | Evidence | Correlation Edges | ~ms |
+| **7. Graph** | petgraph | Edges + Nodes | Investigation Graph | ~ms |
+| **8. Verify** | Verification Engine | Graph + Receipts + Provenance | Verification Report | ~ms |
+| **9. Export** | Export Engine | Verified Graph | CASE/UCO, Cytoscape, etc. | ~ms |
+| **10. Dashboard** | Frontend | API + WebSocket | Interactive UI | Real-time |
+
+### Key Data Flow
+
+```
+JOCKY Script
+    │
+    ▼
+AST (typed, validated, capabilities inferred)
+    │
+    ▼
+IR (platform-agnostic, ordered steps, explicit deps)
+    │
+    ▼
+Execution Contract (bound to target + policy)
+    │
+    ▼
+Collectors → Evidence + Receipts (immediate, per-step)
+    │
+    ▼
+Provenance Chain (hash-linked, per-transformation)
+    │
+    ▼
+Correlation Rules → Edges (deterministic, cited)
+    │
+    ▼
+Investigation Graph (petgraph, queryable)
+    │
+    ▼
+Verification (receipt sigs + provenance hashes)
+    │
+    ▼
+Exports (CASE/UCO, Cytoscape, Timesketch, Markdown)
+```
+
+### Analyst Interaction Points
+
+| Point | Action | Interface |
+|-------|--------|-----------|
+| **Submit** | Write/run script | CLI: `jockey run script.jky` / API: `POST /investigations` |
+| **Monitor** | Watch execution | WebSocket: `/investigations/{id}/stream` |
+| **Explore** | Graph, timeline, evidence | Dashboard: `investigation.html?id=...` |
+| **Hypothesize** | Add/bind hypotheses | Dashboard: Findings/Hypothesis tabs |
+| **Verify** | Trigger tamper check | Dashboard: Verify tab / API: `POST /verify` |
+| **Export** | Download reports | Dashboard: Export tab / API: `GET /export/{format}` |
+
+### Error Handling
+
+| Failure Point | Behavior |
+|---------------|----------|
+| Parse/Type Error | Fast fail; return diagnostics with source location |
+| Policy Violation | Fast fail; return specific policy error |
+| Collector Error | Per-step retry (configurable); `continue_on_error` policy |
+| Correlation Error | Log warning; continue with partial graph |
+| Verification Failure | **Hard stop**; return detailed tamper report |
+| Export Error | Return partial exports; log errors |
+
+### Demo Flow (SIH)
+
+1. **Load Sample** — `jockey load sample_case/` (pre-parsed Plaso CSV)
+2. **Show Graph** — `jockey graph show` (causal chain)
+3. **Run DSL** — `jockey run investigate.jky` (hypothesis-driven)
+4. **Compile** — `jockey compile investigate.jky` → VQL, KAPE, CASE
+5. **Export Narrative** — `jockey narrative` → `evidence_report.md`
+6. **Verify Integrity** — Display hash chain; confirm deterministic replay
+7. **Tamper Demo** — Modify evidence → verification FAIL → restore → PASS
+8. **Close** — "One script. Three backends. Complete evidence chain. Zero post-processing."

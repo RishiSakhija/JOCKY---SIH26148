@@ -1,0 +1,80 @@
+# Execution Contract Lifecycle Diagram
+
+```mermaid
+sequenceDiagram
+    participant Analyst
+    participant Compiler as JOCKY Compiler
+    participant PolicyEngine as Policy Engine
+    participant Registry as Collector Registry
+    participant Runtime as Runtime Engine
+    participant Collector as Collector (Win/Lin)
+    participant EvidenceStore as Evidence Store
+
+    Analyst->>Compiler: JOCKY Script + Target Spec
+    Compiler->>Compiler: Parse → AST → Type Check → IR
+    Compiler->>PolicyEngine: IR Module + Target Spec
+    PolicyEngine->>Registry: Query Collector Manifests
+    Registry-->>PolicyEngine: Capabilities, Schemas, Versions
+    PolicyEngine->>PolicyEngine: Validate Capabilities\nCheck Allowlist\nValidate Param Schemas\nEnforce Bounds
+    alt Validation Failed
+        PolicyEngine-->>Analyst: PolicyError (unauthorized collector, invalid params, etc.)
+    else Validation Passed
+        PolicyEngine->>Runtime: Validated Execution Contract
+        Runtime->>Runtime: Topological Sort Steps\nPlan Parallel Execution
+        loop For Each Step (respecting deps)
+            Runtime->>Collector: execute(action, params, context)
+            Collector->>Collector: Collect Evidence\nCompute Hash (blake3)\nSign Receipt (Ed25519)
+            Collector-->>Runtime: Evidence + Receipt
+            Runtime->>EvidenceStore: Store Evidence + Receipt\nAppend Provenance Record
+        end
+        Runtime-->>Analyst: Execution Result\n(Graph, Findings, Exports)
+    end
+```
+
+---
+
+## Explanation
+
+This sequence diagram shows the **Execution Contract lifecycle** from analyst intent to completed investigation.
+
+### Phases
+
+| Phase | Actor | Key Actions |
+|-------|-------|-------------|
+| **1. Compile** | Compiler | Parse DSL → AST → Type Check → IR |
+| **2. Validate** | Policy Engine | Check collector allowlist, param schemas, capability bounds |
+| **3. Contract** | Policy Engine | Produce validated Execution Contract with run_id |
+| **4. Plan** | Runtime | Topological sort, parallelism planning |
+| **5. Execute** | Runtime + Collectors | Dispatch steps, collect evidence, sign receipts |
+| **6. Store** | Runtime | Persist evidence, receipts, provenance |
+| **7. Result** | Runtime | Return investigation graph, findings, exports |
+
+### Policy Enforcement Points
+
+1. **Collector Allowlist** — Only registered collectors for target OS
+2. **Parameter Schema Validation** — JSON Schema per collector/action
+3. **Capability Bounds** — Script declares capabilities; runtime enforces
+4. **Timeout Bounds** — Min 1s, max 300s per step
+5. **Evidence Root Isolation** — Chroot-style path restriction
+6. **Hash Algorithm Pinning** — blake3 or SHA-256 only
+7. **Collector Version Pinning** — Exact version in contract
+
+### Execution Contract Structure
+
+```json
+{
+  "ir_id": "ULID",
+  "run_id": "ULID",
+  "target": { "type": "live", "identifier": "HOST-01", "os": "windows" },
+  "steps": [
+    { "step_id": "ULID", "collector": "windows_evt", "action": "query", "params": {...}, "timeout_ms": 30000 }
+  ],
+  "policy": { "parallelism": 2, "evidence_root": "...", "hash_algorithm": "blake3" }
+}
+```
+
+### Error Handling
+
+- **Validation Errors** → Returned to analyst before execution (fast fail)
+- **Runtime Errors** → Per-step retry policy, `continue_on_error` policy flag
+- **Collector Errors** → Mapped to `CollectorError` variants, logged in metrics

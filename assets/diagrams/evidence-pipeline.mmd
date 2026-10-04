@@ -1,0 +1,145 @@
+# Evidence Pipeline Diagram
+
+```mermaid
+flowchart TD
+    subgraph COLLECT["Collection"]
+        STEP["Execution Step\n(collector + action + params)"]
+        COLLECTOR["Collector.execute()"]
+        RAW["Raw Evidence Bytes\n+ Collector Metadata"]
+    end
+
+    subgraph HASH["Hashing"]
+        BLAKE3["blake3(raw_bytes)\n→ payload_hash"]
+    end
+
+    subgraph RECEIPT["Receipt Generation"]
+        SIGN["Ed25519_sign(payload_hash || evidence_id || timestamp, collector_privkey)"]
+        RECEIPT_OBJ["EvidenceReceipt\n{id, evidence_id, run_id, collector, version,\n signature, public_key, payload_hash, timestamp, host_info}"]
+    end
+
+    subgraph EVIDENCE["Evidence Object Creation"]
+        EVIDENCE_OBJ["Evidence\n{id, run_id, step_id, collector, type, name,\n path, size, hash, hash_algo, metadata, collected_at}"]
+        WRITE["Write Evidence to Disk\n(evidence_root/run_id/evidence_id.jsonl)"]
+    end
+
+    subgraph PROVENANCE["Provenance Chain Initiation"]
+        PROV_ROOT["ProvenanceRecord\n{id, evidence_id, receipt_id, prev=null,\n action='collected', actor=collector, actor_version,\n input_hashes=[], output_hashes=[payload_hash],\n timestamp, signature}"]
+    end
+
+    subgraph STORE["Persistence"]
+        DB["SQLite\n(evidence, receipts, provenance tables)"]
+        FS["Filesystem\n(evidence files)"]
+    end
+
+    STEP --> COLLECTOR
+    COLLECTOR --> RAW
+    RAW --> BLAKE3
+    BLAKE3 --> SIGN
+    SIGN --> RECEIPT_OBJ
+    RAW --> EVIDENCE_OBJ
+    EVIDENCE_OBJ --> WRITE
+    WRITE --> FS
+    RECEIPT_OBJ --> DB
+    EVIDENCE_OBJ --> DB
+    RECEIPT_OBJ --> PROV_ROOT
+    PROV_ROOT --> DB
+
+    style STEP fill:#8b5cf6,color:#fff
+    style COLLECTOR fill:#8b5cf6,color:#fff
+    style RAW fill:#3b82f6,color:#fff
+    style BLAKE3 fill:#f59e0b,color:#fff
+    style SIGN fill:#f59e0b,color:#fff
+    style RECEIPT_OBJ fill:#f59e0b,color:#fff
+    style EVIDENCE_OBJ fill:#f59e0b,color:#fff
+    style WRITE fill:#f59e0b,color:#fff
+    style PROV_ROOT fill:#ef4444,color:#fff
+    style DB fill:#06b6d4,color:#fff
+    style FS fill:#06b6d4,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **evidence pipeline** from collection to persisted evidence with receipt and provenance.
+
+### Pipeline Stages
+
+| Stage | Operation | Output | Crypto |
+|-------|-----------|--------|--------|
+| **1. Collect** | `Collector.execute()` | Raw bytes + metadata | — |
+| **2. Hash** | `blake3(bytes)` | `payload_hash` | blake3 (fast, parallel) |
+| **3. Sign** | `Ed25519_sign(payload_hash \| \| evidence_id \| \| timestamp)` | `signature` | Ed25519 (collector key) |
+| **4. Receipt** | Build `EvidenceReceipt` | Receipt JSON | — |
+| **5. Evidence** | Build `Evidence` object | Evidence JSON | — |
+| **6. Persist** | Write to disk + SQLite | Files + DB rows | — |
+| **7. Provenance** | Create root `ProvenanceRecord` | Provenance JSON | Actor signs |
+
+### Immediate Verification
+
+After persistence, runtime **immediately verifies**:
+1. `Ed25519_verify(public_key, payload_hash \| \| evidence_id \| \| timestamp, signature)`
+2. `blake3(evidence_bytes) == payload_hash`
+3. Timestamp within clock skew tolerance
+
+### Evidence Object
+
+```json
+{
+  "id": "ULID",
+  "run_id": "ULID",
+  "step_id": "ULID",
+  "collector": "windows_evt",
+  "type": "artifact/evt",
+  "name": "Security-4625-events",
+  "path": "evidence/ULID.jsonl",
+  "size": 24576,
+  "hash": "a1b2c3d4e5f6...",
+  "hash_algo": "blake3",
+  "metadata": { "event_count": 47, "earliest": "...", "latest": "..." },
+  "collected_at": "2026-10-04T12:00:05Z"
+}
+```
+
+### Evidence Receipt
+
+```json
+{
+  "id": "ULID",
+  "evidence_id": "ULID",
+  "run_id": "ULID",
+  "collector": "windows_evt",
+  "collector_version": "0.1.0",
+  "signature": "MEUCIQD...",
+  "public_key": "a1b2c3d4e5f6...",
+  "payload_hash": "a1b2c3d4e5f6...",
+  "payload_hash_algo": "blake3",
+  "timestamp": "2026-10-04T12:00:05Z",
+  "host_info": { "hostname": "HOST-01", "os": "Windows 10", "kernel": "10.0.19045", "collector_pid": 4216 }
+}
+```
+
+### Root Provenance Record
+
+```json
+{
+  "id": "ULID",
+  "evidence_id": "ULID",
+  "receipt_id": "ULID",
+  "prev_provenance_id": null,
+  "action": "collected",
+  "actor": "windows_evt",
+  "actor_version": "0.1.0",
+  "input_hashes": [],
+  "output_hashes": ["a1b2c3d4e5f6..."],
+  "parameters": {},
+  "timestamp": "2026-10-04T12:00:05Z",
+  "signature": "Ed25519(actor_key, payload)"
+}
+```
+
+### Storage
+
+- **SQLite**: `evidence`, `receipts`, `provenance` tables (indexed by `run_id`, `evidence_id`)
+- **Filesystem**: Evidence payloads at `evidence_root/run_id/evidence_id.jsonl` (JSONL format)
+- **Hash Algorithm**: blake3 (default) or SHA-256 (configurable via policy)

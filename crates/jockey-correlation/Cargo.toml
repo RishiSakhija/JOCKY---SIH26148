@@ -1,0 +1,28 @@
+[package]
+name = "jockey-correlation"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY Correlation: Deterministic correlation rules, investigation graph, query API"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "graph-algorithms"]
+keywords = ["forensics", "dfir", "correlation", "graph", "investigation", "causal"]
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+ulid = { workspace = true }
+chrono = { workspace = true }
+petgraph = { workspace = true }
+
+# Crate-local dependencies
+jockey-core = { path = "../jockey-core" }
+jockey-evidence = { path = "../jockey-evidence" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tempfile = { workspace = true }

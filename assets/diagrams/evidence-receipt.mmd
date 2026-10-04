@@ -1,0 +1,91 @@
+# Evidence Receipt Lifecycle Diagram
+
+```mermaid
+sequenceDiagram
+    participant Runtime as Runtime Engine
+    participant Collector as Collector (Win/Lin)
+    participant Crypto as Crypto Primitives
+    participant Store as Evidence Store
+
+    Runtime->>Collector: execute(action, params, context)
+    Collector->>Collector: Perform Collection\n(raw bytes, metadata)
+    Collector->>Crypto: blake3(evidence_bytes)
+    Crypto-->>Collector: payload_hash
+    Collector->>Crypto: Ed25519_sign(payload_hash || evidence_id || timestamp, collector_privkey)
+    Crypto-->>Collector: signature
+    Collector->>Collector: Build EvidenceReceipt\n{id, evidence_id, run_id, collector, version,\n signature, public_key, payload_hash, payload_hash_algo,\n timestamp, host_info}
+    Collector-->>Runtime: Evidence + EvidenceReceipt
+    Runtime->>Store: Persist Evidence (file)\nPersist Receipt (DB)\nCreate Provenance Record (action="collected")
+    Store-->>Runtime: OK
+    Runtime->>Runtime: Verify Receipt Immediately\n(verify sig, recompute hash, check timestamp)
+    alt Verification Failed
+        Runtime->>Runtime: Abort / Alert
+    else Verification Passed
+        Runtime->>Runtime: Continue Pipeline
+    end
+```
+
+---
+
+## Explanation
+
+This sequence diagram shows the **Evidence Receipt lifecycle** — the cryptographic attestation created at collection time for every evidence object.
+
+### Flow
+
+1. **Runtime** dispatches collection to **Collector**
+2. **Collector** performs native collection (Windows API, Linux `/proc`, etc.)
+3. **Collector** computes `blake3(payload_hash)` of evidence bytes
+3. **Collector** signs `payload_hash || evidence_id || timestamp` with its Ed25519 private key
+4. **Collector** builds `EvidenceReceipt` with signature, public key, host info
+5. **Collector** returns `Evidence + EvidenceReceipt` to **Runtime**
+6. **Runtime** persists both, creates initial `ProvenanceRecord` (`action="collected"`)
+7. **Runtime** immediately verifies receipt (signature, hash, timestamp)
+
+### Evidence Receipt Structure
+
+```json
+{
+  "id": "ULID",
+  "evidence_id": "ULID",
+  "run_id": "ULID",
+  "collector": "windows_evt",
+  "collector_version": "0.1.0",
+  "signature": "MEUCIQD...",           // Ed25519 signature
+  "public_key": "a1b2c3d4e5f6...",    // Collector public key (hex)
+  "payload_hash": "a1b2c3d4e5f6...",  // blake3(evidence_bytes)
+  "payload_hash_algo": "blake3",
+  "timestamp": "2026-10-04T12:00:05Z",
+  "host_info": {
+    "hostname": "WORKSTATION-01",
+    "os": "Windows 10 22H2",
+    "kernel": "10.0.19045",
+    "collector_pid": 4216
+  }
+}
+```
+
+### Verification Steps (Runtime + Later Audits)
+
+1. **Signature Verification** — `Ed25519_verify(public_key, payload_hash || evidence_id || timestamp, signature)`
+2. **Hash Verification** — `blake3(evidence_bytes) == payload_hash`
+3. **Timestamp Validation** — Within acceptable clock skew (e.g., ±5 min)
+4. **Version Check** — `collector_version` matches registry
+5. **Host Info Consistency** — Matches target specification
+
+### Security Properties
+
+| Property | Mechanism |
+|----------|-----------|
+| **Authenticity** | Ed25519 signature by collector identity key |
+| **Integrity** | blake3 hash binds receipt to exact evidence bytes |
+| **Non-repudiation** | Collector cannot deny producing this receipt |
+| **Freshness** | Timestamp + ULID prevent replay |
+| **Context** | Host info provides collection environment |
+
+### Key Management
+
+- Each collector binary has embedded Ed25519 key pair (generated at build time)
+- Public keys distributed via collector registry / manifest
+- Key rotation: new collector version = new key pair
+- No central CA needed; trust-on-first-use or pinned keys

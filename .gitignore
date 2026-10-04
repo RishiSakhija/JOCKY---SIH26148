@@ -1,0 +1,70 @@
+# JOCKY .gitignore
+
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.dll
+*.exe
+*.so
+*.dylib
+
+# Test outputs
+test-output/
+coverage/
+*.profraw
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Evidence data (generated at runtime)
+evidence/
+*.jsonl
+*.case.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend build (if any)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Screenshots (generated)
+screenshots/*.png
+screenshots/*.jpg
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.xz
+
+# Misc
+*.orig
+*.rej

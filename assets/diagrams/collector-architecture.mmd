@@ -1,0 +1,186 @@
+# Windows/Linux Collector Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph RUNTIME["JOCKY Runtime"]
+        DISPATCH["Dispatcher\n(execute step)"]
+        CTX["ExecutionContext\nrun_id, evidence_root, target, temp_dir"]
+    end
+
+    subgraph REGISTRY["Collector Registry"]
+        REG["Registry\n(name → Collector trait object)"]
+        MANIFEST["Collector Manifests\ncapabilities, schemas, versions"]
+    end
+
+    subgraph TRAIT["Collector Trait (jockey-collectors)"]
+        TRAIT_DEF["trait Collector\nname(), version()\nsupported_actions()\nsupported_os()\nexecute()"]
+    end
+
+    subgraph WINDOWS["Windows Collectors (windows-sys)"]
+        PROC_W["proc_windows\nlist, get, tree\n→ artifact/process"]
+        FILE_W["file_windows\nenumerate, hash, collect, mft, usn, vss\n→ artifact/file, artifact/ntfs, artifact/mft"]
+        REG_W["registry_windows\nenumerate, get, monitor\n→ artifact/reg"]
+        LOGS_W["logs_windows\nquery, export, tail\n→ artifact/evt"]
+        NET_W["net_windows\nconnections, listen, capture\n→ artifact/connection"]
+    end
+
+    subgraph LINUX["Linux Collectors (userspace)"]
+        PROC_L["proc_linux\nlist, get, tree\n/proc, auditd\n→ artifact/process"]
+        FILE_L["file_linux\nenumerate, hash, collect, fanotify\n→ artifact/file"]
+        CONFIG_L["config_linux\nenumerate, get, systemd, journald\n→ artifact/config, artifact/journald"]
+        LOGS_L["logs_linux\nquery, export, audit\n→ artifact/syslog, artifact/audit"]
+        NET_L["net_linux\nconnections, listen, capture, conntrack\n→ artifact/connection"]
+    end
+
+    subgraph EBPF["eBPF Extensions (Future, Aya)"]
+        PROC_E["proc_ebpf\nexec/fork/exit trace"]
+        FILE_E["file_ebpf\nopen/read/write/unlink trace"]
+        NET_E["net_ebpf\nconnect/accept/send/recv trace"]
+        CRED_E["cred_ebpf\ncredential access trace"]
+    end
+
+    subgraph OUTPUT["Output"]
+        EVIDENCE["Evidence Objects\n(id, type, hash, metadata)"]
+        RECEIPT["Evidence Receipts\n(Ed25519, blake3)"]
+        PROVENANCE["Provenance Records\n(hash-linked chain)"]
+    end
+
+    DISPATCH --> REG
+    REG --> TRAIT_DEF
+    TRAIT_DEF --> PROC_W
+    TRAIT_DEF --> FILE_W
+    TRAIT_DEF --> REG_W
+    TRAIT_DEF --> LOGS_W
+    TRAIT_DEF --> NET_W
+    TRAIT_DEF --> PROC_L
+    TRAIT_DEF --> FILE_L
+    TRAIT_DEF --> CONFIG_L
+    TRAIT_DEF --> LOGS_L
+    TRAIT_DEF --> NET_L
+    TRAIT_DEF -.-> PROC_E
+    TRAIT_DEF -.-> FILE_E
+    TRAIT_DEF -.-> NET_E
+    TRAIT_DEF -.-> CRED_E
+
+    PROC_W --> EVIDENCE
+    FILE_W --> EVIDENCE
+    REG_W --> EVIDENCE
+    LOGS_W --> EVIDENCE
+    NET_W --> EVIDENCE
+    PROC_L --> EVIDENCE
+    FILE_L --> EVIDENCE
+    CONFIG_L --> EVIDENCE
+    LOGS_L --> EVIDENCE
+    NET_L --> EVIDENCE
+    PROC_E -.-> EVIDENCE
+    FILE_E -.-> EVIDENCE
+    NET_E -.-> EVIDENCE
+    CRED_E -.-> EVIDENCE
+
+    EVIDENCE --> RECEIPT
+    RECEIPT --> PROVENANCE
+
+    CTX --> DISPATCH
+    MANIFEST --> REG
+
+    style PROC_W fill:#10b981,color:#fff
+    style FILE_W fill:#10b981,color:#fff
+    style REG_W fill:#10b981,color:#fff
+    style LOGS_W fill:#10b981,color:#fff
+    style NET_W fill:#10b981,color:#fff
+    style PROC_L fill:#10b981,color:#fff
+    style FILE_L fill:#10b981,color:#fff
+    style CONFIG_L fill:#10b981,color:#fff
+    style LOGS_L fill:#10b981,color:#fff
+    style NET_L fill:#10b981,color:#fff
+    style PROC_E fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style FILE_E fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style NET_E fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style CRED_E fill:#10b981,color:#fff,stroke-dasharray: 5 5
+    style TRAIT_DEF fill:#8b5cf6,color:#fff
+    style REG fill:#8b5cf6,color:#fff
+    style DISPATCH fill:#8b5cf6,color:#fff
+    style EVIDENCE fill:#f59e0b,color:#fff
+    style RECEIPT fill:#f59e0b,color:#fff
+    style PROVENANCE fill:#f59e0b,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **collector architecture** with Windows and Linux implementations sharing a common trait interface.
+
+### Core Abstraction
+
+**Collector Trait** (`jockey-collectors/src/trait.rs`):
+```rust
+#[async_trait]
+trait Collector: Send + Sync {
+    fn name(&self) -> &'static str;
+    fn version(&self) -> &'static str;
+    fn supported_actions(&self) -> Vec<&'static str>;
+    fn supported_os(&self) -> Vec<&'static str>;
+    async fn execute(&self, action: &str, params: Value, ctx: &ExecutionContext) -> Result<CollectorOutput, CollectorError>;
+}
+```
+
+### Windows Collectors (5 MVP)
+
+| Collector | Key APIs | Evidence Types |
+|-----------|----------|----------------|
+| `proc_windows` | Toolhelp32, PSAPI, WMI | `artifact/process` |
+| `file_windows` | FindFile, NTFS, USN, VSS | `artifact/file`, `artifact/ntfs`, `artifact/mft` |
+| `registry_windows` | RegOpenKeyEx, RegEnumValue | `artifact/reg` |
+| `logs_windows` | EvtQuery, EvtExportLog, ETW | `artifact/evt` |
+| `net_windows` | GetExtendedTcpTable, NDIS | `artifact/connection` |
+
+### Linux Collectors (5 MVP)
+
+| Collector | Key Interfaces | Evidence Types |
+|-----------|----------------|----------------|
+| `proc_linux` | `/proc`, `auditd` | `artifact/process` |
+| `file_linux` | `libc`, `fanotify`, `statx` | `artifact/file` |
+| `config_linux` | `/etc`, `systemd`, `sd_journal` | `artifact/config`, `artifact/journald` |
+| `logs_linux` | `/var/log`, `auditd` | `artifact/syslog`, `artifact/audit` |
+| `net_linux` | `/proc/net`, `conntrack`, `AF_PACKET` | `artifact/connection` |
+
+### Cross-Platform Evidence Mapping
+
+| Semantic Type | Windows Collector | Linux Collector |
+|---------------|-------------------|-----------------|
+| Process | `proc_windows` | `proc_linux` |
+| File | `file_windows` | `file_linux` |
+| Registry/Config | `registry_windows` | `config_linux` |
+| Logs | `logs_windows` | `logs_linux` |
+| Network | `net_windows` | `net_linux` |
+
+### eBPF Extension (Future)
+
+- **Framework**: Aya (Rust eBPF)
+- **Architecture**: Separate eBPF collectors implementing same trait
+- **Safety**: Kernel verifier, no persistent state, auto-unload
+- **Compatibility**: Kernel 5.10+ with BTF/CO-RE
+- **Fallback**: Graceful degradation to userspace collectors
+
+### Execution Context
+
+```rust
+struct ExecutionContext {
+    run_id: String,
+    evidence_root: PathBuf,      // Isolated per-run directory
+    target: TargetSpec,          // OS, arch, identifier
+    temp_dir: PathBuf,           // Scratch space
+    credentials: Option<Value>,  // If needed (e.g., remote)
+}
+```
+
+### Collector Output
+
+```rust
+struct CollectorOutput {
+    evidence: Vec<Evidence>,      // Primary evidence objects
+    artifacts: Vec<ArtifactRef>,  // Side artifacts (e.g., raw EVTX)
+    metrics: CollectorMetrics,    // Duration, bytes, errors
+}
+```

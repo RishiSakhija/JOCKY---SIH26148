@@ -1,0 +1,38 @@
+[package]
+name = "jockey-core"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY Core: IR, Execution Contract, Policy Engine, Storage"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "command-line-utilities"]
+keywords = ["forensics", "dfir", "investigation", "evidence", "provenance"]
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+ulid = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+petgraph = { workspace = true }
+rusqlite = { workspace = true }
+figment = { workspace = true }
+config = { workspace = true }
+clap = { workspace = true }
+blake3 = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+zeroize = { workspace = true }
+
+# Crate-local dependencies
+jockey-evidence = { path = "../jockey-evidence" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tempfile = { workspace = true }

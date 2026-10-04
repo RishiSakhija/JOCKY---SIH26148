@@ -1,0 +1,217 @@
+# Deterministic Correlation Flow Diagram
+
+```mermaid
+flowchart TD
+    subgraph INPUT["Input Evidence"]
+        E1["Evidence: Process A\n(type=artifact/process)\npid=100, ppid=1, name=svchost.exe"]
+        E2["Evidence: Process B\n(type=artifact/process)\npid=200, ppid=100, name=powershell.exe"]
+        E3["Evidence: File C\n(type=artifact/file)\npath=C:\\Temp\\script.ps1,\nhash=abc123"]
+        E4["Evidence: Network D\n(type=artifact/connection)\npid=200, remote=192.168.1.1:443"]
+        E5["Evidence: Indicator E\n(type=indicator/ioc)\nioc_type=domain, value=evil.com"]
+    end
+
+    subgraph RULES["Correlation Rules Engine"]
+        R1["Rule: pid_link\nrelation='spawned'\nsource=artifact/process\ntarget=artifact/process\ncondition: source.pid == target.ppid\nconfidence=1.0"]
+        R2["Rule: file_write\nrelation='wrote'\nsource=artifact/process\ntarget=artifact/file\ncondition: process.pid == file.writer_pid\nconfidence=0.95"]
+        R3["Rule: net_link\nrelation='connected'\nsource=artifact/process\ntarget=artifact/connection\ncondition: process.pid == conn.pid\nconfidence=0.95"]
+        R4["Rule: ioc_match\nrelation='resolved_to'\nsource=artifact/connection\ntarget=indicator/ioc\ncondition: conn.remote_ip in indicator.ips\nconfidence=1.0"]
+        R5["Rule: timestamp_join\nrelation='timeline_adjacent'\nsource=*\ntarget=*\ncondition: |t1 - t2| <= window\nconfidence=0.7"]
+    end
+
+    subgraph EDGES["Correlation Edges"]
+        C1["CorrelationEdge\nsrc=E1, dst=E2\nrelation='spawned'\nconfidence=1.0\nmethod='pid_link'\nevidence_ids=[E1.id, E2.id]"]
+        C2["CorrelationEdge\nsrc=E2, dst=E3\nrelation='wrote'\nconfidence=0.95\nmethod='file_write'\nevidence_ids=[E2.id, E3.id]"]
+        C3["CorrelationEdge\nsrc=E2, dst=E4\nrelation='connected'\nconfidence=0.95\nmethod='net_link'\nevidence_ids=[E2.id, E4.id]"]
+        C4["CorrelationEdge\nsrc=E4, dst=E5\nrelation='resolved_to'\nconfidence=1.0\nmethod='ioc_match'\nevidence_ids=[E4.id, E5.id]"]
+    end
+
+    subgraph GRAPH["Investigation Graph (petgraph)"]
+        G["Graph<Node=EvidenceNode, Edge=CorrelationEdge>\nNodes: E1, E2, E3, E4, E5\nEdges: C1, C2, C3, C4"]
+    end
+
+    subgraph QUERIES["Graph Queries"]
+        Q1["path(E1, E5) → [E1→E2→E4→E5]\nCausal chain: svchost→powershell→network→IOC"]
+        Q2["backward_from(E5, 1h) → [E4, E2, E1]\nPrecursor events"]
+        Q3["hypothesis_support('T1059') → [E2, E3]\nEvidence supporting hypothesis"]
+    end
+
+    E1 --> R1
+    E2 --> R1
+    R1 --> C1
+
+    E2 --> R2
+    E3 --> R2
+    R2 --> C2
+
+    E2 --> R3
+    E4 --> R3
+    R3 --> C3
+
+    E4 --> R4
+    E5 --> R4
+    R4 --> C4
+
+    E1 --> R5
+    E2 --> R5
+    E3 --> R5
+    E4 --> R5
+    E5 --> R5
+
+    C1 --> G
+    C2 --> G
+    C3 --> G
+    C4 --> G
+
+    G --> Q1
+    G --> Q2
+    G --> Q3
+
+    style E1 fill:#3b82f6,color:#fff
+    style E2 fill:#3b82f6,color:#fff
+    style E3 fill:#10b981,color:#fff
+    style E4 fill:#ef4444,color:#fff
+    style E5 fill:#8b5cf6,color:#fff
+    style R1 fill:#f59e0b,color:#fff
+    style R2 fill:#f59e0b,color:#fff
+    style R3 fill:#f59e0b,color:#fff
+    style R4 fill:#f59e0b,color:#fff
+    style R5 fill:#f59e0b,color:#fff
+    style C1 fill:#ef4444,color:#fff
+    style C2 fill:#ef4444,color:#fff
+    style C3 fill:#ef4444,color:#fff
+    style C4 fill:#ef4444,color:#fff
+    style G fill:#ef4444,color:#fff
+    style Q1 fill:#06b6d4,color:#fff
+    style Q2 fill:#06b6d4,color:#fff
+    style Q3 fill:#06b6d4,color:#fff
+```
+
+---
+
+## Explanation
+
+This diagram shows the **deterministic correlation flow** from raw evidence through rule engine to investigation graph.
+
+### Core Principle
+
+> **DETERMINISTIC EVIDENCE CORRELATION** — Not ML, not heuristic scoring. Every edge is derived from observable keys with explicit evidence citations.
+
+### Correlation Rules (Configuration)
+
+```json
+{
+  "rules": [
+    {
+      "name": "pid_link",
+      "relation": "spawned",
+      "source_type": "artifact/process",
+      "target_type": "artifact/process",
+      "condition": "source.pid == target.ppid",
+      "confidence": 1.0
+    },
+    {
+      "name": "file_write",
+      "relation": "wrote",
+      "source_type": "artifact/process",
+      "target_type": "artifact/file",
+      "condition": "source.pid == target.writer_pid && abs(source.timestamp - target.timestamp) < 5s",
+      "confidence": 0.95
+    },
+    {
+      "name": "net_link",
+      "relation": "connected",
+      "source_type": "artifact/process",
+      "target_type": "artifact/connection",
+      "condition": "source.pid == target.pid",
+      "confidence": 0.95
+    },
+    {
+      "name": "ioc_match",
+      "relation": "resolved_to",
+      "source_type": "artifact/connection",
+      "target_type": "indicator/ioc",
+      "condition": "target.value in [source.remote_ip, source.remote_domain]",
+      "confidence": 1.0
+    },
+    {
+      "name": "timestamp_join",
+      "relation": "timeline_adjacent",
+      "source_type": "*",
+      "target_type": "*",
+      "condition": "abs(source.timestamp - target.timestamp) <= window_seconds",
+      "confidence": 0.7,
+      "params": { "window_seconds": 300 }
+    }
+  ]
+}
+```
+
+### Correlation Edge
+
+```json
+{
+  "id": "ULID",
+  "run_id": "ULID",
+  "src_evidence_id": "ULID",
+  "dst_evidence_id": "ULID",
+  "relation": "spawned|wrote|connected|resolved_to|indicates|supported_by|timeline_adjacent",
+  "confidence": 0.95,
+  "method": "pid_link|file_write|net_link|ioc_match|timestamp_join|custom",
+  "details": { "window_seconds": 300 },
+  "created_at": "2026-10-04T12:00:10Z",
+  "created_by": "correlator"
+}
+```
+
+### Investigation Graph (petgraph)
+
+```rust
+use petgraph::graph::Graph;
+use petgraph::Direction;
+
+type InvestigationGraph = Graph<EvidenceNode, CorrelationEdge, Directed>;
+
+struct EvidenceNode {
+    evidence_id: String,
+    evidence_type: String,
+    timestamp: DateTime<Utc>,
+    summary: String,  // Human-readable summary
+}
+
+struct CorrelationEdge {
+    relation: String,
+    confidence: f32,
+    method: String,
+    details: Value,
+    evidence_ids: Vec<String>,  // Supporting evidence IDs
+}
+```
+
+### Graph Queries
+
+| Query | Purpose | Example |
+|-------|---------|---------|
+| `path(from, to, max_hops)` | Causal chain | `svchost.exe → powershell.exe → network → C2` |
+| `backward_from(node, window)` | Precursors | Events leading to IOC |
+| `forward_from(node, window)` | Consequences | Events caused by process |
+| `hypothesis_support(id)` | Hypothesis evidence | All edges citing MITRE T1059 |
+| `subgraph(evidence_ids)` | Export subset | For report generation |
+
+### Observable Keys Used
+
+| Key | Sources | Relations Enabled |
+|-----|---------|-------------------|
+| `pid` / `ppid` | Process evidence | `spawned` |
+| `path` / `hash` | File + Process | `wrote`, `read`, `contains` |
+| `ip` / `port` / `pid` | Network + Process | `connected`, `resolved_to` |
+| `timestamp` | All evidence | `timeline_adjacent` |
+| `ioc_value` | Indicator + Network/File | `resolved_to`, `contains`, `matches` |
+
+### Confidence Model
+
+- **1.0** — Deterministic (PID link, exact IOC match)
+- **0.95** — High confidence (process-file handle, process-network socket)
+- **0.9** — Strong (file read correlation)
+- **0.8-1.0** — Rule-based findings (configurable per rule)
+- **0.7** — Temporal proximity (timestamp join, configurable window)
+- **Never** — Opaque ML scores; every confidence has explicit method + evidence IDs

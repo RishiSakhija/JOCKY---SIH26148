@@ -1,6 +1,3 @@
-# System Architecture Diagram
-
-```mermaid
 flowchart TD
     subgraph LANG["JOCKY Language Layer"]
         DSL["JOCKY Script (.jky)"]
@@ -95,26 +92,3 @@ flowchart TD
     style MD fill:#06b6d4,color:#fff
     style AXUM fill:#06b6d4,color:#fff
     style UI fill:#06b6d4,color:#fff
-```
-
----
-
-## Explanation
-
-This diagram shows the **complete JOCKY system architecture** organized into 7 logical layers:
-
-1. **Language Layer** — DSL parsing, AST, type checking, IR generation
-2. **Core Layer** — Execution Contract building, policy validation, runtime execution
-3. **Collector Layer** — Registry with Windows, Linux, and future eBPF collectors
-4. **Evidence Layer** — Common Evidence Model, cryptographic receipts, provenance chains
-5. **Correlation Layer** — Deterministic rules engine, petgraph-based investigation graph
-6. **Verification Layer** — Tamper detection via receipt + provenance validation
-7. **Export Layer** — Multiple output formats (CASE/UCO, Cytoscape, Timesketch, Markdown)
-8. **API Layer** — Axum HTTP/WebSocket server serving the frontend dashboard
-
-**Key Architectural Decisions:**
-- Clear separation between intent (Language) and action (Runtime)
-- Policy engine as security boundary (Execution Contract)
-- Every evidence piece gets immediate receipt + provenance
-- Deterministic correlation (no ML) with explicit evidence citations
-- Export formats decoupled from internal representation

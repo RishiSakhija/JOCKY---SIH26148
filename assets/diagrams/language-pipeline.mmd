@@ -1,6 +1,3 @@
-# JOCKY Language Pipeline Diagram
-
-```mermaid
 flowchart TD
     subgraph INPUT["Input"]
         SCRIPT["JOCKY Script\n(declarative, hypothesis-driven)"]
@@ -56,47 +53,3 @@ flowchart TD
     style BIND fill:#8b5cf6,color:#fff
     style INJECT fill:#8b5cf6,color:#fff
     style EXEC_CONTRACT fill:#8b5cf6,color:#fff
-```
-
----
-
-## Explanation
-
-This diagram shows the **JOCKY language compilation pipeline** from source script to Execution Contract.
-
-### Stages
-
-| Stage | Technology | Output | Validation |
-|-------|------------|--------|------------|
-| **Lexing** | pest (generated) | Tokens | Syntax validity |
-| **Parsing** | pest (PEG) | CST | Grammar conformance |
-| **AST Building** | Rust | Typed AST | Semantic validation, capability inference |
-| **IR Lowering** | Rust | Forensic IR | Dependency resolution, cycle detection |
-| **Contract Building** | Rust | Execution Contract | Policy injection, target binding |
-
-### Key Design Points
-
-1. **pest PEG Grammar** — Precedence climbing for expressions, clear error messages
-2. **Capability Inference** — Type checker infers required capabilities from `collect` statements
-3. **Platform-Agnostic IR** — No OS-specific logic in IR; collectors handle platform differences
-4. **Explicit Dependencies** — `depends_on` in IR enables parallel execution planning
-5. **Policy Injection** — Execution Contract adds runtime policy (timeouts, evidence root, hash algorithm)
-6. **Diagnostics** — Rich error reporting with source spans for analyst-friendly feedback
-
-### DSL → IR Mapping Example
-
-```jocky
-collect process as procs where name == "svchost.exe"
-```
-↓
-```json
-{
-  "id": "ULID",
-  "collector": "proc_windows",  // or proc_linux based on target
-  "action": "list",
-  "params": { "filter": { "name_contains": "svchost.exe" } },
-  "binds": ["procs"],
-  "depends_on": [],
-  "capabilities": ["process.enumerate"]
-}
-```

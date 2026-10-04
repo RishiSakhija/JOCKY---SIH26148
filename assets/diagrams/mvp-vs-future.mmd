@@ -1,6 +1,3 @@
-# MVP vs Future Architecture Diagram
-
-```mermaid
 flowchart TD
     subgraph MVP["MVP (SIH Demo)"]
         direction TB
@@ -82,63 +79,3 @@ flowchart TD
     style R_NOTARY fill:#3b82f6,color:#fff
     style R_LEGAL fill:#3b82f6,color:#fff
     style R_INTEL fill:#3b82f6,color:#fff
-```
-
----
-
-## Explanation
-
-This diagram shows the **MVP scope** (what's specified for SIH demo) vs **Post-MVP** and **Research** directions.
-
-### MVP Scope (Phases 0-8, SIH Demo Ready)
-
-| Component | Status | Implementation |
-|-----------|--------|----------------|
-| **Language** | ✅ Specified | Pest grammar, AST, type checker, IR compiler |
-| **Execution Contract** | ✅ Specified | Contract builder, policy engine, capability validation |
-| **Runtime** | ✅ Specified | Sequential/parallel dispatch, timeout/retry, isolation |
-| **Evidence Model** | ✅ Specified | 7 types, ULIDs, blake3, Ed25519, provenance chain |
-| **Windows Collectors** | ✅ Specified | 5 collectors (proc, file, reg, logs, net) |
-| **Linux Collectors** | ✅ Specified | 5 collectors (proc, file, config, logs, net) |
-| **Correlation** | ✅ Specified | 9 rules, petgraph, queries, hypothesis overlay |
-| **API** | ✅ Specified | Axum REST + WebSocket, OpenAPI |
-| **Frontend** | ✅ Specified | 8 pages, Cytoscape, Chart.js, Kanban |
-| **Export** | ✅ Specified | CASE/UCO, Cytoscape, Timesketch, Markdown |
-| **CLI** | ✅ Specified | run, compile, graph, verify, export |
-
-### Post-MVP (Phases 9-15, After SIH)
-
-| Feature | Description | Effort | Dependencies |
-|---------|-------------|--------|--------------|
-| **eBPF Collectors** | Aya-based syscall/socket/file tracing | High | Kernel 5.10+, BTF/CO-RE |
-| **Kernel Drivers** | Windows ETW kernel, minifilter | Very High | Driver signing, WHQL |
-| **Remote Agents** | gRPC/mTLS, capability negotiation | High | Agent binary, enrollment |
-| **Multi-tenancy** | Orgs, RBAC, data isolation | Medium | AuthZ, PostgreSQL |
-| **AI Assist** | Local LLM for hypothesis/timeline | Medium | llama.cpp, GGUF models |
-| **Collaboration** | CRDT-based multi-analyst | High | Yjs/Automerge, WebRTC |
-| **Cloud Collection** | AWS/Azure/GCP snapshot APIs | Medium | Cloud SDKs, IAM |
-| **Container Forensics** | Docker/containerd/K8s artifacts | Medium | CRI, K8s API |
-| **Mobile Forensics** | iOS/Android backup parsing | High | libimobiledevice, ADB |
-| **Formal Verification** | Prusti/Kani proofs for IR | Very High | Rust verification tools |
-
-### Research Directions (Exploratory)
-
-| Feature | Description | Maturity |
-|---------|-------------|----------|
-| **WASM Plugins** | Sandboxed, portable collector extensions | Experimental |
-| **Distributed Execution** | Multi-target coordination, aggregation | Research |
-| **Query Optimization** | IR rewrite rules, collector pushdown | Research |
-| **Differential Investigation** | Compare runs, highlight deltas | Research |
-| **Evidence Notarization** | Blockchain/trusted timestamping | Research |
-| **Legal Hold** | Automated preservation workflows | Research |
-| **Threat Intel Fusion** | Real-time IOC enrichment | Research |
-
-### Decision Criteria for Post-MVP
-
-| Criterion | Threshold |
-|-----------|-----------|
-| **User Demand** | >3 SIH judges/mentors request |
-| **Technical Feasibility** | Prototype in <2 weeks |
-| **Security Impact** | No new attack surface |
-| **Maintenance Burden** | <5% of codebase |
-| **Alignment** | Supports Evidence-Contract USP |

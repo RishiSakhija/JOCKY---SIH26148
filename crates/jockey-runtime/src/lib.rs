@@ -1,7 +1,4 @@
 //! JOCKY Runtime — Execution Engine, Dispatcher, Sandbox
-//! 
-//! Phase 2: Stub implementation for CI validation.
-//! Actual implementation begins in Phase 2.
 
 #![warn(missing_docs)]
 #![warn(clippy::all)]
@@ -10,39 +7,50 @@
 pub mod executor;
 pub mod dispatcher;
 pub mod sandbox;
+pub mod collector_registry;
 
-/// Executor module
-pub mod executor {
-    use crate::executor::ExecutionResult;
-    
-    /// Runtime executor placeholder
-    pub struct Runtime;
-    
-    impl Runtime {
-        /// Execute a contract
-        pub async fn execute(_contract: crate::contract::ExecutionContract) -> Result<ExecutionResult, RuntimeError> {
-            unimplemented!("Phase 2 implementation")
-        }
-    }
-    
-    /// Execution result placeholder
-    pub struct ExecutionResult;
-    
-    /// Runtime error type
-    #[derive(Debug)]
-    pub struct RuntimeError;
+/// Execute a contract
+pub async fn execute(
+    contract: crate::contract::ExecutionContract,
+    registry: &crate::collector_registry::CollectorRegistry,
+) -> Result<crate::executor::ExecutionResult, RuntimeError> {
+    let executor = crate::executor::Executor::new(registry);
+    executor.execute(contract).await
 }
 
-/// Dispatcher module
-pub mod dispatcher {
-    /// Dispatcher placeholder
-    pub struct Dispatcher;
+/// Runtime error
+#[derive(Debug, thiserror::Error)]
+pub enum RuntimeError {
+    #[error("Contract validation failed: {0}")]
+    ContractValidation(String),
+    #[error("Collector error: {0}")]
+    CollectorError(#[from] crate::collectors::trait_def::CollectorError),
+    #[error("Evidence storage error: {0}")]
+    StorageError(String),
+    #[error("Collector not found: {0}")]
+    CollectorNotFound(String),
+    #[error("Policy violation: {0}")]
+    PolicyViolation(String),
 }
 
-/// Sandbox module
-pub mod sandbox {
-    /// Sandbox placeholder
-    pub struct Sandbox;
+/// Execution result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionResult {
+    pub run_id: String,
+    pub status: ExecutionStatus,
+    pub evidence_collected: usize,
+    pub receipts_generated: usize,
+    pub provenance_records: usize,
+    pub findings: usize,
+    pub duration_ms: u64,
+    pub errors: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ExecutionStatus {
+    Success,
+    Partial,
+    Failed,
 }
 
 #[cfg(test)]

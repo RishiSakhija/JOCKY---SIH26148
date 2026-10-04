@@ -19,10 +19,15 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 ulid = { workspace = true }
 chrono = { workspace = true }
-blake3 = { workspace = true }
 ed25519-dalek = { workspace = true }
 rand = { workspace = true }
 zeroize = { workspace = true }
+
+# Graph
+petgraph = { version = "0.6", features = ["serde", "graphmap"] }
+
+# System
+hostname = "0.3"
 
 # Crate-local dependencies
 jockey-core = { path = "../jockey-core" }

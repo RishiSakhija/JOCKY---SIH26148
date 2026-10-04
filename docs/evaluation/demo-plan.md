@@ -35,7 +35,7 @@ Investigator
 6. **Verify** — Run verification -> **FAIL** (hash mismatch detected)
 7. **Restore** — Restore original evidence (git checkout)
 8. **Verify Again** — Run verification -> **PASS** (integrity restored)
-9. **Generate Report** — Export court-ready narrative with citations
+9. **Generate Report** — Export verification-backed narrative with citations
 
 ---
 

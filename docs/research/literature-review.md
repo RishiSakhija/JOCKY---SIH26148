@@ -6,18 +6,18 @@
 
 ## Purpose
 
-Verified academic and industry research sources relevant to JOCKY's architecture. All sources verified against primary publications.
+Verified academic and industry research sources relevant to JOCKY's architecture. Sources verified against primary publications where available.
 
 ---
 
 ## Forensic Domain-Specific Languages
 
 ### Nugget: A Digital Forensics Language
-- **Authors**: Casey, E., et al.
-- **Year**: 2015
+- **Authors**: Stelly, C., Roussev, V.
+- **Year**: 2018
 - **Venue**: Digital Investigation
-- **DOI**: 10.1016/j.diin.2015.05.002
-- **URL**: https://doi.org/10.1016/j.diin.2015.05.002
+- **DOI**: 10.1016/j.diin.2018.01.006
+- **URL**: https://doi.org/10.1016/j.diin.2018.01.006
 - **Contribution**: DSL for forensic analysis with evidence types, provenance, and reproducibility
 - **Overlap with JOCKY**: Evidence-first semantics, provenance tracking, reproducible execution
 - **What it does NOT solve**: Cross-platform compilation, execution contracts, deterministic correlation engine, evidence receipts
@@ -52,11 +52,12 @@ Verified academic and industry research sources relevant to JOCKY's architecture
 ## Provenance & Evidence Integrity
 
 ### Provexa / ProvQL
-- **Authors**: Bates, A., et al.
-- **Year**: 2015
-- **Venue**: CCS
-- **DOI**: 10.1145/2810103.2813668
-- **URL**: https://doi.org/10.1145/2810103.2813668
+- **Authors**: Tsegai, S.A., Yang, X., Liu, H., Gao, P.
+- **Year**: 2025
+- **Venue**: Proceedings of the VLDB Endowment (PVLDB)
+- **Volume**: 18, Issue 11
+- **Pages**: 3771-3783
+- **DOI**: 10.14778/3749646.3749653
 - **Contribution**: DSL + provenance graph for investigation, evidence tracking
 - **Overlap with JOCKY**: DSL + provenance graph, investigation tracking
 - **What it does NOT solve**: Cross-platform compilation, execution contracts, deterministic correlation rules, evidence receipts
@@ -74,7 +75,7 @@ Verified academic and industry research sources relevant to JOCKY's architecture
 - **Source**: CASE Community
 - **URL**: https://caseontology.org/
 - **Contribution**: Ontology for cyber-investigation data exchange (JSON-LD)
-- **Overlap with JOCKY**: Evidence modeling, interoperability, court-ready export
+- **Overlap with JOCKY**: Evidence modeling, interoperability, verification-backed export
 - **What it does NOT solve**: Query language, execution runtime, collectors, correlation engine
 - **Design Implication**: JOCKY exports to CASE/UCO; not a replacement
 
@@ -99,12 +100,12 @@ Verified academic and industry research sources relevant to JOCKY's architecture
 - **Design Implication**: Supports Rust architectural direction; consider Rust plugins
 
 ### LEMON: eBPF-based Volatile Memory Acquisition
-- **Authors**: Lee, J., et al.
-- **Year**: 2021
-- **Venue**: USENIX Security
-- **DOI**: 10.5555/3493210.3493215
-- **URL**: https://www.usenix.org/conference/usenixsecurity21/presentation/lee
-- **Contribution**: eBPF for memory acquisition without kernel module
+- **Authors**: Oliveri, A., Cavenati, M., De Rosa, S., Lakshmi Narasimhan, S., Balzarotti, D.
+- **Year**: 2026
+- **Venue**: Digital Investigation
+- **DOI**: 10.1016/j.fsidi.2026.302045
+- **URL**: https://doi.org/10.1016/j.fsidi.2026.302045
+- **Contribution**: eBPF-based volatile memory acquisition for Android and hardened Linux
 - **Overlap with JOCKY**: eBPF for forensics, kernel visibility
 - **What it does NOT solve**: Query language, provenance, correlation, CASE export
 - **Design Implication**: Validates eBPF approach for Linux collectors; JOCKY documents as future extension

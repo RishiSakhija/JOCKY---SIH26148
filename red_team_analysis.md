@@ -112,7 +112,7 @@
 ---
 
 ### USP 3: Causal Attack Graph with Evidence Provenance ⭐ WINNER
-**Description:** Not a timeline. A GRAPH. Nodes = forensic events (process creation, file write, network connection, registry change, memory injection). Edges = CAUSAL relationships (spawned, wrote, read, injected, connected-to, loaded-by). Every edge has: evidence source (which artifact, which tool, which timestamp), confidence score, analyst verification status. Auto-constructed from ANY input (Velociraptor, KAPE, Volatility, osquery, EVTX, MFT, PCAP). Enables: "Show me the full causal chain from phishing email to domain controller compromise" with ONE CLICK. Export to court-ready narrative.
+**Description:** Not a timeline. A GRAPH. Nodes = forensic events (process creation, file write, network connection, registry change, memory injection). Edges = CAUSAL relationships (spawned, wrote, read, injected, connected-to, loaded-by). Every edge has: evidence source (which artifact, which tool, which timestamp), confidence score, analyst verification status. Auto-constructed from ANY input (Velociraptor, KAPE, Volatility, osquery, EVTX, MFT, PCAP). Enables: "Show me the full causal chain from phishing email to domain controller compromise" with ONE CLICK. Export to verification-backed narrative.
 
 **Components:** Multi-source evidence ingest (live, disk, memory, network, cloud), Causal relationship inference engine (deterministic rules + optional AI assist), Graph database backend with time-travel queries, Evidence provenance tracking per node/edge (hash, tool, version, analyst), Interactive graph investigation UI, One-click narrative report with citations, Hypothesis overlay (mark nodes as supports/refutes hypothesis X)
 
@@ -170,7 +170,7 @@
 
 1. **BUILDABLE TODAY:** Core graph engine + hypothesis model + 2-3 backend integrations (Velociraptor, KAPE, Volatility 3) achievable in hackathon timeframe. Graph DB (Neo4j/JanusGraph) + Python backend + React frontend = standard stack.
 
-2. **DEMOABLE LIVE:** Load a sample case (memory dump + disk image + PCAP) → show auto-constructed graph → add hypothesis "APT29 lateral movement" → watch confidence update as evidence maps → one-click court-ready narrative export.
+2. **DEMOABLE LIVE:** Load a sample case (memory dump + disk image + PCAP) → show auto-constructed graph → add hypothesis "APT29 lateral movement" → watch confidence update as evidence maps → one-click verification-backed narrative export.
 
 3. **CLEAR TECHNICAL EXPLANATION:** 
    - Causal inference from forensic artifacts (deterministic rules: process A spawned B → edge "spawned" with evidence citation)
@@ -193,4 +193,4 @@
 
 ## OUR RECOMMENDED USP:
 
-**Causal Attack Graph with Evidence Provenance:** A causal attack graph platform that auto-constructs evidence-backed attack narratives from ANY forensic source (live, disk, memory, cloud), tracks investigator hypotheses with confidence scoring, and exports court-ready investigation logic — turning fragmented artifact collection into structured, defensible incident reconstruction.
+**Causal Attack Graph with Evidence Provenance:** A causal attack graph platform that auto-constructs evidence-backed attack narratives from ANY forensic source (live, disk, memory, cloud), tracks investigator hypotheses with confidence scoring, and exports verification-backed investigation logic — turning fragmented artifact collection into structured, defensible incident reconstruction.

@@ -14,10 +14,10 @@ This document provides an overview of the research foundation for JOCKY, mapping
 
 | Category | Description | Key Sources |
 |----------|-------------|-------------|
-| **Forensic DSLs** | Domain-specific languages for forensics | Nugget, VQL, KQL, ES|QL |
-| **Provenance Systems** | Evidence provenance tracking | Provexa/ProvQL, DFIR-ORC, CASE/UCO |
-| **Memory Forensics** | Volatile memory analysis | Volatility 3, LEMON, Rusting Volatility |
-| **eBPF Forensics** | Kernel-level tracing | Aya, bpftrace, LEMON |
+| **Forensic DSLs** | Domain-specific languages for forensics | Nugget (2018), VQL, KQL, ES\|QL |
+| **Provenance Systems** | Evidence provenance tracking | Provexa/ProvQL (2025), DFIR-ORC, CASE/UCO |
+| **Memory Forensics** | Volatile memory analysis | Volatility 3, LEMON (2026), Rusting Volatility |
+| **eBPF Forensics** | Kernel-level tracing | Aya, bpftrace, LEMON (2026) |
 | **Timeline/Graph** | Causal reconstruction | Plaso, Timesketch, Maltego |
 | **Standards** | Interoperability formats | CASE/UCO, NIST, STIX |
 
@@ -29,7 +29,7 @@ This document provides an overview of the research foundation for JOCKY, mapping
 |----------|--------------|
 | **Why a new DSL?** | Not for DSL novelty — for *compilation target* unification (VQL, SQL, KAPE, Volatility, CASE) |
 | **Why provenance chains?** | Not for novelty — for *deterministic verification* integrated with execution contracts |
-| **Why deterministic correlation?** | ML is opaque; deterministic rules provide *explainable, court-ready* edges |
+| **Why deterministic correlation?** | ML is opaque; deterministic rules provide *explainable, verification-backed* edges |
 | **Why Rust?** | Memory safety, performance, WASM target, growing forensics ecosystem |
 | **Why eBPF as extension?** | Kernel visibility without drivers; CO-RE for portability |
 

@@ -14,10 +14,10 @@ Verified bibliography of all research sources cited in JOCKY documentation.
 
 | # | Title | Authors | Year | Venue | DOI/URL | Verified |
 |---|-------|---------|------|-------|---------|----------|
-| 1 | Nugget: A Digital Forensics Language | Casey, E., et al. | 2015 | Digital Investigation | 10.1016/j.diin.2015.05.002 | Yes |
-| 2 | Provexa: Provenance-Aware Forensic Investigation | Bates, A., et al. | 2015 | CCS | 10.1145/2810103.2813668 | Yes |
-| 3 | LEMON: eBPF-Based Volatile Memory Acquisition | Lee, J., et al. | 2021 | USENIX Security | 10.5555/3493210.3493215 | Yes |
-| 4 | Volatility 3: Next-Generation Memory Forensics | Walters, A., et al. | 2019 | Digital Investigation | 10.1016/j.diin.2019.04.001 | Yes |
+| 1 | Nugget: A Digital Forensics Language | Stelly, C., Roussev, V. | 2018 | Digital Investigation | 10.1016/j.diin.2018.01.006 | Yes |
+| 2 | Provexa: Provenance-Aware Forensic Investigation | Tsegai, S.A., Yang, X., Liu, H., Gao, P. | 2025 | Proceedings of the VLDB Endowment | 10.14778/3749646.3749653 | Yes |
+| 3 | LEMON: A universal eBPF-based volatile memory acquisition tool for modern android devices and hardened linux systems | Oliveri, A., Cavenati, M., De Rosa, S., Lakshmi Narasimhan, S., Balzarotti, D. | 2026 | Digital Investigation | 10.1016/j.fsidi.2026.302045 | Yes |
+| 4 | Volatility 3 | Volatility Foundation | — | Official Project | https://github.com/volatilityfoundation/volatility3 | Tool Reference |
 
 ---
 
@@ -44,7 +44,7 @@ Verified bibliography of all research sources cited in JOCKY documentation.
 | 17 | Timesketch | GitHub Repository | https://github.com/google/timesketch | Yes |
 | 18 | Timesketch | Official Site | https://timesketch.org/ | Yes |
 | 19 | Plaso/log2timeline | GitHub Repository | https://github.com/log2timeline/plaso | Yes |
-| 19 | Plaso/log2timeline | Documentation | https://plaso.readthedocs.io/ | Yes |
+| 20 | Plaso/log2timeline | Documentation | https://plaso.readthedocs.io/ | Yes |
 | 20 | Aya (Rust eBPF) | Official Site | https://aya-rs.dev/ | Yes |
 | 21 | bpftrace | GitHub Repository | https://github.com/bpftrace/bpftrace | Yes |
 | 22 | CASE/UCO | Official Site | https://caseontology.org/ | Yes |
@@ -78,12 +78,11 @@ Verified bibliography of all research sources cited in JOCKY documentation.
 
 ## Verification Notes
 
-- All academic papers verified via DOI/publisher
-- All tool documentation verified via official project sites
-- All GitHub repositories verified as official/maintained
+- Academic papers verified against primary publications (DOI/publisher) where available
+- Tool documentation verified via official project sites
+- GitHub repositories verified as official/maintained
 - Internal documents are project artifacts, not external claims
-- No invented papers, DOIs, or URLs
-- No fabricated authors, years, or venues
+- Volatility 3 cited as tool reference (no academic paper DOI claimed)
 
 ---
 

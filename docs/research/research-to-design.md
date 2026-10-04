@@ -60,7 +60,7 @@ Trace each architectural decision in JOCKY to its research foundation.
 ### 5. Why Deterministic Correlation (Not ML)?
 - **Timesketch analyzers**: ML exists but opaque
 - **KQL/ES|QL joins**: Deterministic but not evidence-cited
-- **JOCKY**: Rule-based with explicit evidence IDs, confidence, method — court-ready
+- **JOCKY**: Rule-based with explicit evidence IDs, confidence, method — verification-backed
 
 ### 6. Why petgraph for Investigation Graph?
 - **Pure Rust**: No FFI, memory safe

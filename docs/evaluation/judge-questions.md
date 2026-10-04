@@ -7,7 +7,7 @@
 ## Technical Architecture
 
 ### Q: "Why not just use Velociraptor?"
-**A:** Velociraptor excels at live hunting with VQL, but forces you to write VQL for collection, a different syntax for KAPE/Volatility offline parsing, and another toolchain for CASE/UCO export and court-ready provenance. JOCKY lets investigators author **one script that simultaneously generates a Velociraptor hunt, a KAPE target set, a Volatility plugin invocation, and a signed CASE bundle** — guaranteeing the same logic, same provenance, and same evidence integrity across live, dead, and cloud forensics. We don't replace Velociraptor; we make it one of many back-ends for a single, auditable investigation definition.
+**A:** Velociraptor excels at live hunting with VQL, but forces you to write VQL for collection, a different syntax for KAPE/Volatility offline parsing, and another toolchain for CASE/UCO export and verification-backed provenance. JOCKY lets investigators author **one script that simultaneously generates a Velociraptor hunt, a KAPE target set, a Volatility plugin invocation, and a signed CASE bundle** — guaranteeing the same logic, same provenance, and same evidence integrity across live, dead, and cloud forensics. We don't replace Velociraptor; we make it one of many back-ends for a single, auditable investigation definition.
 
 ### Q: "How is this different from osquery?"
 **A:** osquery is a **snapshot query engine** (SQL on OS state). It has no procedural collection, no timeline engine, no hypothesis tracking, no evidence receipts, no provenance chains, and no compilation to other backends. JOCKY adds: hypothesis-driven collection, deterministic correlation with evidence citations, cryptographic receipts at collection time, hash-linked provenance, and compilation to Velociraptor/KAPE/Volatility/CASE.
@@ -120,7 +120,7 @@ Correlation rules operate on **common semantic fields** (pid, path, hash, timest
 - Legal hold/preservation workflows
 
 ### Q: "What's the long-term vision?"
-**A:** **Evidence-Contract Forensics Platform** — unified workflow from intent to verified report, compiling to all major DFIR backends, with cryptographic evidence integrity, deterministic correlation, and court-ready export. Become the "Git for investigations" + "compiler for forensics."
+**A:** **Evidence-Contract Forensics Platform** — unified workflow from intent to verified report, compiling to all major DFIR backends, with cryptographic evidence integrity, deterministic correlation, and verification-backed export. Become the "Git for investigations" + "compiler for forensics."
 
 ### Q: "How do you sustain this after SIH?"
 **A:** Open source (MIT), community-driven, plugin architecture for collectors/rules/exports. Seek academic/industry partnerships for formal verification (Prusti/Kani) and standards alignment (CASE/UCO, NIST).

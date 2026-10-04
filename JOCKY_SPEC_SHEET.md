@@ -680,24 +680,24 @@ CREATE INDEX idx_findings_run ON findings(run_id);
 
 | Component | In MVP | Notes |
 |-----------|--------|-------|
-| DSL Parser (pest) | ✅ | 10 statements, full grammar |
-| AST + Type Checker | ✅ | Capability inference |
-| IR Compiler | ✅ | Platform-agnostic |
-| Execution Contract | ✅ | Policy validation |
-| Runtime Engine | ✅ | Sequential + parallel dispatch |
-| Evidence Model | ✅ | 7 types, ULIDs, blake3 |
-| Evidence Receipts | ✅ | Ed25519, collector keys |
-| Provenance Chain | ✅ | Hash-linked, signed |
-| Windows Collectors | ✅ | 5 collectors (proc, file, reg, logs, net) |
-| Linux Collectors | ✅ | 4 collectors (proc, file, config, logs, net) |
-| Correlation Engine | ✅ | 9 deterministic rules |
-| Investigation Graph | ✅ | petgraph, queries, export |
-| Verification Engine | ✅ | Receipt + provenance validation |
-| Axum API | ✅ | REST + WebSocket |
-| Frontend Dashboard | ✅ | 8 pages, Cytoscape + Chart.js |
-| CASE/UCO Export | ✅ | Core classes mapped |
-| Timesketch Export | ✅ | CSV/JSON compatible |
-| CLI Tool | ✅ | `jockey` binary with subcommands |
+| DSL Parser (pest) | Planned | 10 statements, full grammar |
+| AST + Type Checker | Planned | Capability inference |
+| IR Compiler | Planned | Platform-agnostic |
+| Execution Contract | Planned | Policy validation |
+| Runtime Engine | Planned | Sequential + parallel dispatch |
+| Evidence Model | Planned | 7 types, ULIDs, SHA-256 |
+| Evidence Receipts | Planned | Ed25519, collector keys |
+| Provenance Chain | Planned | Hash-linked, signed |
+| Windows Collectors | Planned | 5 collectors (proc, file, reg, logs, net) |
+| Linux Collectors | Planned | 5 collectors (proc, file, config, logs, net) |
+| Correlation Engine | Planned | 9 deterministic rules |
+| Investigation Graph | Planned | petgraph, queries, export |
+| Verification Engine | Planned | Receipt + provenance validation |
+| Axum API | Planned | REST + WebSocket |
+| Frontend Dashboard | Planned | 8 pages, Cytoscape + Chart.js |
+| CASE/UCO Export | Planned | Core classes mapped |
+| Timesketch Export | Planned | CSV/JSON compatible |
+| CLI Tool | Planned | `jockey` binary with subcommands |
 
 ---
 
@@ -760,10 +760,10 @@ CREATE INDEX idx_findings_run ON findings(run_id);
 | SQLite Persistence | NOT IMPLEMENTED | — | `crates/jockey-core/src/storage.rs` |
 | CLI Tool | NOT IMPLEMENTED | — | `crates/jockey-cli/src/main.rs` |
 | CASE/UCO Export | SPECIFIED | `docs/evidence/verification.md` | `crates/jockey-evidence/src/export.rs` |
-| Architecture Diagrams | ✅ COMPLETE | `assets/diagrams/` | Mermaid in Markdown |
-| Research Documentation | ✅ COMPLETE | `docs/research/` | Markdown |
-| Audit Report | ✅ COMPLETE | `COMPLETE_AUDIT_REPORT.md` | — |
-| Handoff Document | ✅ COMPLETE | `HANDOFF.md` | — |
+| Architecture Diagrams | SPECIFIED | `assets/diagrams/` | Mermaid in Markdown |
+| Research Documentation | SPECIFIED | `docs/research/` | Markdown |
+| Phase 0 Self-Assessment | COMPLETE | `PHASE_0_SELF_ASSESSMENT.md` | — |
+| Handoff Document | SPECIFIED | `HANDOFF.md` | — |
 
 ---
 

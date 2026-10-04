@@ -85,7 +85,7 @@ Investigation Graph (causal, time-travel capable)
 Verification (receipt + provenance validation)
        |
        v
-Dashboard / Report (court-ready, citation-backed)
+Dashboard / Report (verification-backed, citation-backed)
 ```
 
 ### Integration Points (The Real Novelty)

@@ -1,0 +1,29 @@
+[package]
+name = "jockey-cli"
+version = "0.1.0"
+edition = "2021"
+description = "JOCKY CLI — Command-line interface for JOCKY"
+license = "MIT"
+repository = "https://github.com/RishiSakhija/JOKEY---SIH26148"
+categories = ["forensics", "security", "command-line-utilities"]
+keywords = ["forensics", "dfir", "cli"]
+
+[dependencies]
+# Workspace dependencies
+tokio = { version = "1.38", features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { workspace = true, features = ["derive", "env", "wrap_help"] }
+
+# Crate-local dependencies
+jockey-language = { path = "../jockey-language" }
+jockey-core = { path = "../jockey-core" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tempfile = { workspace = true }

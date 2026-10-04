@@ -1,7 +1,6 @@
 //! JOCKY Language — Parser, AST, Type Checker, IR Lowering
 //! 
-//! Phase 1: Stub implementation for CI validation.
-//! Actual implementation begins in Phase 1.
+//! Phase 1: Implementation of JOCKY language core.
 
 #![warn(missing_docs)]
 #![warn(clippy::all)]
@@ -12,75 +11,49 @@ pub mod ast;
 pub mod typeck;
 pub mod ir;
 pub mod diagnostics;
+pub mod span;
 
-/// Parser module
-pub mod parser {
-    /// Parse JOCKY source into AST
-    pub fn parse(_source: &str) -> Result<crate::ast::AstModule, ParseError> {
-        unimplemented!("Phase 1 implementation")
-    }
-    
-    /// Parse error type
-    #[derive(Debug)]
-    pub struct ParseError;
+/// Parse JOCKY source into AST
+pub fn parse(source: &str) -> Result<ast::AstModule, crate::parser::ParseError> {
+    crate::parser::parse(source)
 }
 
-/// AST module
-pub mod ast {
-    /// AST Module placeholder
-    pub struct AstModule;
-    
-    /// Typed AST placeholder
-    pub struct TypedAst;
-    
-    /// Statement enum placeholder
-    pub enum Statement {
-        Hypothesis,
-        Collect,
-        Filter,
-        Match,
-        Correlate,
-        Timeline,
-        Bind,
-        Export,
-        Verify,
-    }
-    
-    /// Expression placeholder
-    pub struct Expression;
+/// Type check AST
+pub fn type_check(ast: &ast::AstModule) -> Result<ast::TypedAst, ast::TypeError> {
+    crate::typeck::type_check(ast)
 }
 
-/// Type Checker module
-pub mod typeck {
-    /// Type check AST
-    pub fn type_check(_ast: &crate::ast::AstModule) -> Result<crate::ast::TypedAst, TypeError> {
-        unimplemented!("Phase 1 implementation")
-    }
-    
-    /// Type error type
-    #[derive(Debug)]
-    pub struct TypeError;
+/// Lower typed AST to IR
+pub fn lower_to_ir(typed: &ast::TypedAst) -> Result<crate::ir::IrModule, crate::ir::LowerError> {
+    crate::ir::lower_to_ir(typed)
 }
 
-/// IR Lowering module
-pub mod ir {
-    /// Lower typed AST to IR
-    pub fn lower_to_ir(_typed: &crate::ast::TypedAst) -> Result<crate::ir::IrModule, LowerError> {
-        unimplemented!("Phase 1 implementation")
-    }
-    
-    /// IR Module placeholder
-    pub struct IrModule;
-    
-    /// Lower error type
-    #[derive(Debug)]
-    pub struct LowerError;
+/// Compile JOCKY source to IR
+pub fn compile_to_ir(source: &str) -> Result<crate::ir::IrModule, CompileError> {
+    let ast = parse(source)?;
+    let typed = type_check(&ast)?;
+    let ir = lower_to_ir(&typed)?;
+    Ok(ir)
 }
 
-/// Diagnostics module
-pub mod diagnostics {
-    /// Diagnostic placeholder
-    pub struct Diagnostic;
+/// Compile JOCKY source to Execution Contract
+pub fn compile_to_contract(source: &str, target: crate::core::TargetSpec, policy: crate::core::ExecPolicy) -> Result<crate::core::ExecutionContract, CompileError> {
+    let ir = compile_to_ir(source)?;
+    let contract = crate::core::build_contract(&ir, target, policy)?;
+    Ok(contract)
+}
+
+/// Compile error type
+#[derive(Debug, thiserror::Error)]
+pub enum CompileError {
+    #[error("Parse error: {0}")]
+    Parse(#[from] crate::parser::ParseError),
+    #[error("Type error: {0}")]
+    Type(#[from] crate::ast::TypeError),
+    #[error("IR lowering error: {0}")]
+    Lower(#[from] crate::ir::LowerError),
+    #[error("Contract build error: {0}")]
+    Contract(#[from] crate::core::ContractError),
 }
 
 #[cfg(test)]

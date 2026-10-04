@@ -8,6 +8,7 @@ members = [
     "crates/jockey-collectors",
     "crates/jockey-correlation",
     "crates/jockey-api",
+    "crates/jockey-cli",
 ]
 
 [workspace.package]

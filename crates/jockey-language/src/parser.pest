@@ -1,0 +1,60 @@
+// ============================================================================
+// JOCKY Grammar - Pest PEG Parser
+// ============================================================================
+
+// --- Top Level ---
+investigation = { "investigation" ~ identifier ~ "{" ~ statement* ~ "}" }
+statement = { hypothesis | collect | filter | match | correlate | timeline | bind | export | verify }
+
+// --- Hypothesis ---
+hypothesis = { "hypothesis" ~ string ~ "{" ~ "mitre:" ~ "[" ~ mitre_list? ~ "]" ~ "}" }
+mitre_list = { string ~ ("," ~ string)* }
+
+// --- Collection ---
+collect = { "collect" ~ evidence_type ~ "as" ~ identifier ~ where_clause? }
+evidence_type = { "process" | "file" | "registry" | "config" | "logs" | "network" }
+where_clause = { "where" ~ expression }
+
+// --- Filtering ---
+filter = { "filter" ~ identifier ~ where_clause }
+match = { "match" ~ identifier ~ where_clause }
+
+// --- Correlation ---
+correlate = { "correlate" ~ identifier ~ "->" ~ identifier ~ "by" ~ string ~ "as" ~ identifier ~ correlate_params? }
+correlate_params = { "window" ~ integer ~ ("s" | "m" | "h") }
+
+// --- Timeline ---
+timeline = { "timeline" ~ identifier ~ "from" ~ identifier ~ ("," ~ identifier)* }
+
+// --- Hypothesis Binding ---
+bind = { "bind" ~ "hypothesis" ~ string ~ "to" ~ identifier ~ ("," ~ identifier)* }
+
+// --- Export ---
+export = { "export" ~ output_type ~ identifier ~ "format" ~ format_spec }
+output_type = { "case" | "graph" | "timeline" | "report" }
+format_spec = { "case_uco" | "cytoscape" | "timesketch" | "markdown" | "graphml" | "dot" }
+
+// --- Verification ---
+verify = { "verify" ~ identifier }
+
+// --- Expressions ---
+expression = { comparison ~ (("and" | "or") ~ comparison)* }
+comparison = { identifier ~ operator ~ value }
+operator = { "==" | "!=" | ">" | "<" | ">=" | "<=" | "contains" | "matches" | "in" }
+value = { string | integer | float | boolean | array }
+array = { "[" ~ value ~ ("," ~ value)* ~ "]" }
+
+// --- Lexical ---
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+string = { "\"" ~ (CHAR - "\"")* ~ "\"" }
+integer = { ["-"]? ~ ASCII_DIGIT+ }
+float = { ["-"]? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
+boolean = { "true" | "false" }
+
+// --- Whitespace & Comments ---
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ ("\n" | EOF) }
+
+// --- Rules for Pest ---
+// These are silent rules (prefixed with _)
+// They're used for tokenization but don't appear in the CST

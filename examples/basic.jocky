@@ -1,0 +1,30 @@
+investigation "apt29-lateral-movement" {
+    // Declare hypothesis with MITRE ATT&CK mapping
+    hypothesis "APT29 used WMI for lateral movement" {
+        mitre: ["T1047", "T1547.001"]
+    }
+
+    // Collection (platform-agnostic)
+    collect process as wmi_providers where command_line contains "wmic"
+    collect process as spawns where parent_name == "wmiprvse.exe"
+    collect registry as run_keys where path matches "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run*"
+    collect network as outbound where destination_port in [443, 80, 135, 445]
+
+    // Filtering
+    filter wmi_providers where cpu_time > 1000
+    match spawns where command_line contains "powershell"
+
+    // Correlation (deterministic, evidence-cited)
+    correlate wmi_providers -> spawns by "pid_link" as wmi_chain
+    correlate wmi_chain -> run_keys by "timestamp_join" window 300s as persistence
+    correlate persistence -> outbound by "process_netlink" as c2_beacon
+
+    // Timeline & Hypothesis Binding
+    timeline "lateral_movement" from wmi_chain, persistence, c2_beacon
+    bind hypothesis "APT29 used WMI for lateral movement" to wmi_chain, persistence
+
+    // Output
+    export case "apt29-case" format case_uco
+    export graph "apt29-graph" format cytoscape
+    export report "apt29-report" format markdown
+}
